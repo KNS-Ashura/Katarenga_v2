@@ -5,7 +5,7 @@ from Board.Board import Board
 from Board.Board_draw_tools import Board_draw_tools
 from UI_tools.BaseUi import BaseUI
 
-class Square_editor_ui(BaseUI):
+class SquareEditorUi(BaseUI):
     def __init__(self, title="Square A Editor"):
         super().__init__(title)  # Appelle l'init de BaseUI
 
@@ -137,5 +137,5 @@ class Square_editor_ui(BaseUI):
 
 if __name__ == "__main__":
     board = Board()
-    app = Square_editor_ui(board)
+    app = SquareEditorUi(board)
     app.run()

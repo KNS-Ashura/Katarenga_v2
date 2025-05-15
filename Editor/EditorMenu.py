@@ -1,5 +1,6 @@
 import pygame
-from Editor.Square_editor.Square_editor_ui import Square_editor_ui
+from Editor.Square_editor.SquareEditor_ui import SquareEditorUi
+from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from UI_tools.BaseUi import BaseUI
 
 class EditorMenu(BaseUI):
@@ -49,12 +50,12 @@ class EditorMenu(BaseUI):
                 label = button["label"]
                 if label == "Edit Square":
                     print("Launching Editor...")
-                    Editor = Square_editor_ui()
+                    Editor = SquareEditorUi()
                     Editor.run()
-
 
                 elif label == "Create Board":
                     print("Launching Board Creator...")
+                    Creator = SquareSelectorUi()
 
                 elif label == "Go to menu":
                     print("Returning to Menu...")
