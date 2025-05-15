@@ -1,42 +1,55 @@
 import pygame
-import sys
 
 from Board.Board import Board
 from Board.Board_draw_tools import Board_draw_tools
 from UI_tools.BaseUi import BaseUI
 
 class SquareSelectorUi(BaseUI):
-    def __init__(self, title="Square A Editor"):
-        super().__init__(title)  # Appelle l'init de BaseUI
+    def __init__(self, title="Select your square"):
+        super().__init__(title)
 
         self.board_obj = Board()
         self.board_ui = Board_draw_tools()
-        self.square = self.board_obj.get_default_square()
+        self.board = self.board_obj.get_default_board()
 
         self.cell_size = 100
-        self.grid_size = self.cell_size * 4
-
-        # Utilisation de self.get_width() et get_height() depuis BaseUI
-        screen_width = self.get_width()
+        self.grid_dim = 8
+        self.grid_size = self.cell_size * self.grid_dim
 
         self.title_font = pygame.font.SysFont(None, 48)
-        self.title_surface = self.title_font.render("Square Editor", True, (255, 255, 255))
-        self.title_rect = self.title_surface.get_rect(center=(screen_width // 2, 30))
-
-        self.top_offset = self.title_rect.bottom + 40
-        self.left_offset = (screen_width - self.grid_size) // 2
-
         self.button_font = pygame.font.SysFont(None, 36)
+
+        self.title_surface = self.title_font.render("Square Editor", True, (255, 255, 255))
+        self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 40))
+        self.top_offset = self.title_rect.bottom + 20
+        self.left_offset = (self.get_width() - self.grid_size) // 2
 
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
 
-        # Zone de texte pour entrer un commentaire
-        self.text_input_rect = pygame.Rect(self.left_offset, self.top_offset + self.grid_size + 20, self.grid_size, 40)
-        self.text_input = ""
-        self.text_active = False
+        self.board_obj.load_from_file("game_data.json")
+        self.square_list = self.board_obj.get_square_list()
+        self.square_buttons = self.create_square_buttons()
 
-        # Le bouton de sauvegarde sous la zone de texte
-        self.save_button_rect = pygame.Rect(self.left_offset, self.text_input_rect.bottom + 10, self.grid_size, 40)
+        self.selected_square = None
+        self.holding_square = False 
+        self.held_square_data = None
+
+    def create_square_buttons(self):
+        buttons = []
+        button_width = 150
+        button_height = 40
+        padding = 10
+
+        total_width = len(self.square_list) * (button_width + padding) - padding
+        start_x = (self.get_width() - total_width) // 2
+        y = self.top_offset + self.grid_size + 30
+
+        for idx, name in enumerate(self.square_list.keys()):
+            x = start_x + idx * (button_width + padding)
+            rect = pygame.Rect(x, y, button_width, button_height)
+            buttons.append((name, rect))
+
+        return buttons
 
     def run(self):
         while self.running:
@@ -49,16 +62,17 @@ class SquareSelectorUi(BaseUI):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.running = False
+
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.handle_click(event.pos)
-            elif event.type == pygame.KEYDOWN:
-                if self.text_active:
-                    if event.key == pygame.K_BACKSPACE:
-                        self.text_input = self.text_input[:-1]
-                    elif event.key == pygame.K_RETURN:
-                        self.text_active = False  # Désactiver la saisie
-                    else:
-                        self.text_input += event.unicode
+
+            elif event.type == pygame.KEYDOWN and self.holding_square:
+                if event.key == pygame.K_r:
+                    self.rotate_square()
+                elif event.key == pygame.K_l:
+                    self.flip_square_left()
+                elif event.key == pygame.K_s:
+                    self.shuffle_square()
 
     def handle_click(self, position):
         x, y = position
@@ -67,43 +81,69 @@ class SquareSelectorUi(BaseUI):
             self.running = False
             return
 
-        if self.save_button_rect.collidepoint(x, y):
-            # Vérification que le texte est non vide avant de sauvegarder
-            if self.text_input.strip() == "":
-                print("Erreur : Un texte doit être saisi avant la sauvegarde.")
+        if self.holding_square:
+            if self.is_on_board(x, y):
+                row = (y - self.top_offset) // self.cell_size
+                col = (x - self.left_offset) // self.cell_size
+                self.place_square_on_board(row, col)
+                self.holding_square = False
+                self.held_square_data = None
                 return
 
-            if all(cell != 0 for row in self.square for cell in row):
-                print("Save pressed")
-                self.board_obj.set_square_list(self.text_input, self.square)
-                filename = "game_data.json"
-                self.board_obj.check_or_create_file(filename)
-                self.board_obj.save_to_file(filename)  # Ajouter le texte à la sauvegarde
-            else:
-                print("Erreur : Toutes les cases doivent être non nulles (différentes de 0)")
-
-        if y < self.top_offset or x < self.left_offset:
+        for name, rect in self.square_buttons:
+            if rect.collidepoint(position):
+                self.selected_square = name
+                self.held_square_data = None
+                self.holding_square = False
+                print(f"Bouton sélectionné : {name}")
+                return
+            
+        if self.selected_square:
+            square_cell_size = 40
+            square_width = 4 * square_cell_size
+            square_offset_x = (self.get_width() - square_width) // 2
+            square_offset_y = self.square_buttons[0][1].bottom + 30
+            square_rect = pygame.Rect(square_offset_x, square_offset_y, square_width, square_width)
+    
+        if square_rect.collidepoint(position):
+            self.held_square_data = self.square_list[self.selected_square]
+            self.holding_square = True
+            print(f"Square accroché : {self.selected_square}")
             return
 
-        col = (x - self.left_offset) // self.cell_size
-        row = (y - self.top_offset) // self.cell_size
+    def is_on_board(self, x, y):
+        return (
+            self.left_offset <= x < self.left_offset + self.grid_size
+            and self.top_offset <= y < self.top_offset + self.grid_size
+        )
 
-        if 0 <= row < 4 and 0 <= col < 4:
-            value = self.square[row][col]
-            color_code = value // 10
-            print(f"Clicked cell ({row}, {col}): Value {value}, Color {color_code}")
-            new_color_code = (color_code % 4) + 1
-            self.square[row][col] = new_color_code * 10 + (value % 10)
-            print(f"Updated board: {self.square}")
+    def place_square_on_board(self, row, col):
+        if self.held_square_data is None:
+            return
 
-        # Activer/désactiver la saisie de texte quand la zone de texte est cliquée
-        if self.text_input_rect.collidepoint(x, y):
-            self.text_active = True
+        # Détermine le coin du plateau
+        row = 0 if row < 4 else 4
+        col = 0 if col < 4 else 4
+
+        for i in range(4):
+            for j in range(4):
+                self.board[row + i][col + j] = self.held_square_data[i][j]
+
+        print(f"Square placé dans le quadrant ({row}, {col})")
+
+    def rotate_square(self):
+        pass
+
+    def flip_square_left(self):
+        pass
+
+    def shuffle_square(self):
+        pass
 
     def draw(self):
-        self.get_screen().fill((30, 30, 30))
-
-        self.get_screen().blit(self.title_surface, self.title_rect)
+        screen = self.get_screen()
+        screen.fill((30, 30, 30))
+        screen.blit(self.title_surface, self.title_rect)
 
         for row in range(8):
             for col in range(8):
@@ -113,29 +153,60 @@ class SquareSelectorUi(BaseUI):
                     self.cell_size,
                     self.cell_size
                 )
+                color = self.board_ui.get_color_from_board(self.board[row][col] // 10)
+                pygame.draw.rect(screen, color, rect)
+                pygame.draw.rect(screen, (255, 255, 255), rect, 1)
 
-                color = self.board_ui.get_color_from_board(self.square[row][col] // 10)
-                pygame.draw.rect(self.get_screen(), color, rect)
-                pygame.draw.rect(self.get_screen(), (255, 255, 255), rect, 1)
-
-        pygame.draw.rect(self.get_screen(), (70, 70, 70), self.back_button_rect)
-        pygame.draw.rect(self.get_screen(), (255, 255, 255), self.back_button_rect, 2)
+        pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
+        pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = self.button_font.render("Retour", True, (255, 255, 255))
-        self.get_screen().blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
+        screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
 
-        # Afficher le bouton de sauvegarde sous la zone de texte
-        pygame.draw.rect(self.get_screen(), (70, 70, 70), self.save_button_rect)
-        pygame.draw.rect(self.get_screen(), (255, 255, 255), self.save_button_rect, 2)
-        save_text = self.button_font.render("Sauvegarder", True, (255, 255, 255))
-        self.get_screen().blit(save_text, save_text.get_rect(center=self.save_button_rect.center))
+        for name, rect in self.square_buttons:
+            pygame.draw.rect(screen, (70, 70, 70), rect)
+            pygame.draw.rect(screen, (255, 255, 255), rect, 2)
+            label = self.button_font.render(name, True, (255, 255, 255))
+            screen.blit(label, label.get_rect(center=rect.center))
 
-        # Afficher la zone de texte
-        pygame.draw.rect(self.get_screen(), (255, 255, 255), self.text_input_rect, 2)
-        text_surface = pygame.font.SysFont(None, 36).render(self.text_input, True, (255, 255, 255))
-        self.get_screen().blit(text_surface, (self.text_input_rect.x + 5, self.text_input_rect.y + 5))
+        if self.holding_square and self.held_square_data:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            square_cell_size = 40
+            offset_x = mouse_x - 2 * square_cell_size
+            offset_y = mouse_y - 2 * square_cell_size
 
+            for row in range(4):
+                for col in range(4):
+                    value = self.held_square_data[row][col]
+                    color = self.board_ui.get_color_from_board(value // 10)
+                    rect = pygame.Rect(
+                        offset_x + col * square_cell_size,
+                        offset_y + row * square_cell_size,
+                        square_cell_size,
+                        square_cell_size
+                    )
+                    pygame.draw.rect(screen, color, rect)
+                    pygame.draw.rect(screen, (255, 255, 255), rect, 1)
+
+        elif self.selected_square:
+            square = self.square_list[self.selected_square]
+            square_cell_size = 40
+            square_width = 4 * square_cell_size
+            square_offset_x = (self.get_width() - square_width) // 2
+            square_offset_y = self.square_buttons[0][1].bottom + 30
+
+            for row in range(4):
+                for col in range(4):
+                    rect = pygame.Rect(
+                        square_offset_x + col * square_cell_size,
+                        square_offset_y + row * square_cell_size,
+                        square_cell_size,
+                        square_cell_size
+                    )
+                    value = square[row][col]
+                    color = self.board_ui.get_color_from_board(value // 10)
+                    pygame.draw.rect(screen, color, rect)
+                    pygame.draw.rect(screen, (255, 255, 255), rect, 1)
 
 if __name__ == "__main__":
-    board = Board()
-    app = SquareSelectorUi(board)
+    app = SquareSelectorUi()
     app.run()

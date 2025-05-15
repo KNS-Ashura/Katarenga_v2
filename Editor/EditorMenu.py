@@ -18,6 +18,7 @@ class EditorMenu(BaseUI):
 
         labels_colors = [
             ("Edit Square", (70, 130, 180)),
+            ("Manage squares", (60, 179, 113)),
             ("Create Board", (186, 85, 211)),
             ("Go to menu", (234, 182, 118))
         ]
@@ -53,9 +54,13 @@ class EditorMenu(BaseUI):
                     Editor = SquareEditorUi()
                     Editor.run()
 
+                elif label == "Manage squares":
+                    pass
+
                 elif label == "Create Board":
                     print("Launching Board Creator...")
                     Creator = SquareSelectorUi()
+                    Creator.run()
 
                 elif label == "Go to menu":
                     print("Returning to Menu...")

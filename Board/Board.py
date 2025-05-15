@@ -44,16 +44,32 @@ class Board:
 
     #saves the board in a json file
     def save_to_file(self, filename: str):
-        data = {
-            "square": self.__square_list
+        # Charger les anciennes données s’il y en a
+        if os.path.exists(filename) and os.path.getsize(filename) > 0:
+            with open(filename, "r") as f:
+                try:
+                    existing_data = json.load(f)
+                except json.JSONDecodeError:
+                    existing_data = {}
+        else:
+            existing_data = {}
+
+        # On récupère la partie "square" existante, ou on part d’un dict vide
+        existing_square = existing_data.get("square", {})
+
+        # Mise à jour des données (merge, remplace si même clé)
+        for k, v in self.__square_list.items():
+            existing_square[k] = v
+
+        # Construction des données à sauvegarder
+        data_to_save = {
+            "square": existing_square
         }
 
-        json_compatible_data = {
-            "square": {str(k): v for k, v in self.__square_list.items()}
-        }
-
+        # Sauvegarde dans le fichier (en écrasant le fichier, mais avec fusion des anciennes + nouvelles données)
         with open(filename, "w") as f:
-            json.dump(json_compatible_data, f, indent=4)
+            json.dump(data_to_save, f, indent=4)
+
         print(f"Données sauvegardées dans '{filename}'.")
 
     def check_or_create_file(self, filename: str):
@@ -96,6 +112,9 @@ class Board:
             self.__square_list[clef] = valeur
         else:
             print("Erreur : La clé doit être une chaîne de caractères et la valeur une liste.")
+
+    def get_square_list(self):
+        return self.__square_list
 
 
 
