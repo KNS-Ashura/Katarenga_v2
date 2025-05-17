@@ -55,8 +55,17 @@ class MainMenuUI(BaseUI):
             if button["rect"].collidepoint(position):
                 label = button["label"]
                 print(f"Launching {label}...")
-                if label == "Katarenga" or label == "Isolation" or label == "Congress":
-                    Creat_board = SquareSelectorUi()
+                if label == "Katarenga":
+                    gamemode = 1
+                    Creat_board = SquareSelectorUi(gamemode)
+                    Creat_board.run()
+                elif label == "Congress":
+                    gamemode = 2
+                    Creat_board = SquareSelectorUi(gamemode)
+                    Creat_board.run()
+                elif label == "Isolation":
+                    gamemode = 3
+                    Creat_board = SquareSelectorUi(gamemode)
                     Creat_board.run()
                 elif label == "Board Editor":
                     editor_menu = EditorMenu()

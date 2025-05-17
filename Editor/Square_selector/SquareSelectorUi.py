@@ -5,12 +5,14 @@ from Board.Board_draw_tools import Board_draw_tools
 from UI_tools.BaseUi import BaseUI
 
 class SquareSelectorUi(BaseUI):
-    def __init__(self, title="Select your square"):
+    def __init__(self,gamemode, title="Select your square"):
         super().__init__(title)
 
         self.board_obj = Board()
         self.board_ui = Board_draw_tools()
         self.board = self.board_obj.get_default_board()
+        
+        self.gamemode = gamemode
 
         self.cell_size = 50
         self.grid_dim = 8
@@ -25,6 +27,8 @@ class SquareSelectorUi(BaseUI):
         self.left_offset = (self.get_width() - self.grid_size) // 2
 
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
+        
+        self.start_button_rect = pygame.Rect(self.get_width() // 2 - 100, self.get_height() - 70, 200, 50)
 
         self.board_obj.load_from_file("game_data.json")
         self.square_list = self.board_obj.get_square_list()
@@ -33,6 +37,14 @@ class SquareSelectorUi(BaseUI):
         self.selected_square = None
         self.holding_square = False 
         self.held_square_data = None
+        
+    def is_board_filled(self):
+        for row in self.board:
+            for cell in row:
+                if cell == 0:
+                    return False
+        return True
+
 
     def create_square_buttons(self):
         buttons = []
@@ -76,6 +88,7 @@ class SquareSelectorUi(BaseUI):
 
     def handle_click(self, position):
         x, y = position
+        square_rect = None
 
         if self.back_button_rect.collidepoint(x, y):
             self.running = False
@@ -97,19 +110,37 @@ class SquareSelectorUi(BaseUI):
                 self.holding_square = False
                 print(f"Bouton sélectionné : {name}")
                 return
-            
+
         if self.selected_square:
             square_cell_size = 40
             square_width = 4 * square_cell_size
             square_offset_x = (self.get_width() - square_width) // 2
             square_offset_y = self.square_buttons[0][1].bottom + 30
             square_rect = pygame.Rect(square_offset_x, square_offset_y, square_width, square_width)
-    
-        if square_rect.collidepoint(position):
-            self.held_square_data = self.square_list[self.selected_square]
-            self.holding_square = True
-            print(f"Square accroché : {self.selected_square}")
-            return
+
+            if square_rect.collidepoint(position):
+                self.held_square_data = self.square_list[self.selected_square]
+                self.holding_square = True
+                print(f"Square accroché : {self.selected_square}")
+                return
+
+        if self.start_button_rect.collidepoint(x, y):
+            if self.is_board_filled():
+                print("Lancement de la partie")
+                #if gamemode == 1:
+                #    katarenga = Katarenga()
+                #    katarenga.run()
+                #elif gamemode == 2:
+                #    congress = Congress()
+                #    congress.run()
+                #elif gamemode == 3:
+                #    isolation = Isolation()
+                #    isolation.run()
+            else:
+                print("Le plateau n'est pas encore rempli.")
+
+        return
+
 
     def is_on_board(self, x, y):
         return (
@@ -164,6 +195,15 @@ class SquareSelectorUi(BaseUI):
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = self.button_font.render("Retour", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
+        
+        is_ready = self.is_board_filled()
+        button_color = (0, 200, 0) if is_ready else (100, 100, 100)
+
+        pygame.draw.rect(screen, button_color, self.start_button_rect)
+        pygame.draw.rect(screen, (255, 255, 255), self.start_button_rect, 2)
+
+        start_text = self.button_font.render("Lancer la partie", True, (255, 255, 255))
+        screen.blit(start_text, start_text.get_rect(center=self.start_button_rect.center))
 
         for name, rect in self.square_buttons:
             pygame.draw.rect(screen, (70, 70, 70), rect)
