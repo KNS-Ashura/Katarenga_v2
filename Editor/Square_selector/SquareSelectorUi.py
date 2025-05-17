@@ -12,7 +12,7 @@ class SquareSelectorUi(BaseUI):
         self.board_ui = Board_draw_tools()
         self.board = self.board_obj.get_default_board()
 
-        self.cell_size = 100
+        self.cell_size = 50
         self.grid_dim = 8
         self.grid_size = self.cell_size * self.grid_dim
 
@@ -68,11 +68,11 @@ class SquareSelectorUi(BaseUI):
 
             elif event.type == pygame.KEYDOWN and self.holding_square:
                 if event.key == pygame.K_r:
-                    self.rotate_square()
+                    self.rotate_square_right()
                 elif event.key == pygame.K_l:
-                    self.flip_square_left()
-                elif event.key == pygame.K_s:
-                    self.shuffle_square()
+                    self.rotate_square_left()
+                elif event.key == pygame.K_f:
+                    self.flip_square()
 
     def handle_click(self, position):
         x, y = position
@@ -131,14 +131,17 @@ class SquareSelectorUi(BaseUI):
 
         print(f"Square placé dans le quadrant ({row}, {col})")
 
-    def rotate_square(self):
-        pass
+    def rotate_square_right(self):
+            self.held_square_data = self.board_obj.rotate_right(self.held_square_data)
+            print("Square tourné à droite")
 
-    def flip_square_left(self):
-        pass
+    def rotate_square_left(self):
+        self.held_square_data = self.board_obj.rotate_left(self.held_square_data)
+        print("Square tourné à droite")
 
-    def shuffle_square(self):
-        pass
+    def flip_square(self):
+        self.held_square_data = self.board_obj.flip_horizontal(self.held_square_data)
+        print("Square retourné horizontalement")
 
     def draw(self):
         screen = self.get_screen()

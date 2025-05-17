@@ -2,6 +2,7 @@ import pygame
 import sys
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
+from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
@@ -26,7 +27,7 @@ class MainMenuUI(BaseUI):
 
         self.buttons = []
         for i, (label, color) in enumerate(labels_colors):
-            rect = pygame.Rect(x_center, start_y + i * (btn_height + spacing), btn_width, btn_height)
+            rect = pygame.Rect((x_center - 50), start_y + i * (btn_height + spacing), btn_width, btn_height)
             self.buttons.append({"label": label, "rect": rect, "color": color})
 
     def run(self):
@@ -54,12 +55,9 @@ class MainMenuUI(BaseUI):
             if button["rect"].collidepoint(position):
                 label = button["label"]
                 print(f"Launching {label}...")
-                if label == "Katarenga":
-                    pass
-                elif label == "Congress":
-                    pass
-                elif label == "Isolation":
-                    pass
+                if label == "Katarenga" or label == "Isolation" or label == "Congress":
+                    Creat_board = SquareSelectorUi()
+                    Creat_board.run()
                 elif label == "Board Editor":
                     editor_menu = EditorMenu()
                     editor_menu.run()

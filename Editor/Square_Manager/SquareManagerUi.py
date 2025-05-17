@@ -27,12 +27,12 @@ class SquareManagerUi(BaseUI):
         self.selected_square_data = None
         self.square_attached_to_mouse = False
 
-        largeur = 300
-        hauteur = 300
+        largeur = 150
+        hauteur = 150
 
         self.red_box_rect = pygame.Rect(
             self.screen_w // 2 - (largeur // 2),
-            self.screen_h - 180 - hauteur,
+            self.screen_h - 80 - hauteur,
             largeur,
             hauteur
         )
@@ -42,13 +42,16 @@ class SquareManagerUi(BaseUI):
         self.back_button_rect = pygame.Rect(20, 20, 100, 40)
 
         self.square_display_pos = (self.screen_w // 2 - 2 * self.cell_size, 240)
-
+        
     def create_square_buttons(self):
         buttons = []
-        total_width = len(self.square_list) * (self.button_width + self.button_padding) - self.button_padding
+        # Récupère la liste des clés (noms des carrés)
+        square_names = list(self.square_list.keys())[4:]  # On saute les 4 premiers
+
+        total_width = len(square_names) * (self.button_width + self.button_padding) - self.button_padding
         start_x = (self.screen_w - total_width) // 2
 
-        for idx, name in enumerate(self.square_list.keys()):
+        for idx, name in enumerate(square_names):
             rect = pygame.Rect(
                 start_x + idx * (self.button_width + self.button_padding),
                 self.list_y,
@@ -106,11 +109,23 @@ class SquareManagerUi(BaseUI):
                 self.selected_square_data = None
                 self.selected_square_name = None
             self.square_attached_to_mouse = False
-
+            
     def delete_square(self):
         if self.selected_square_name in self.square_list:
+            # Supprimer de self.square_list (qui est une référence à board_obj.get_square_list())
             del self.square_list[self.selected_square_name]
+
+            # Supprimer de board_obj directement, sans set_square_list
+            square_list_obj = self.board_obj.get_square_list()
+            if self.selected_square_name in square_list_obj:
+                del square_list_obj[self.selected_square_name]
+
+            # Sauvegarder le board_obj qui contient la liste à jour
+            self.board_obj.save_to_file("game_data.json")
+
+            # Mettre à jour les boutons
             self.square_buttons = self.create_square_buttons()
+
             print(f"Carré '{self.selected_square_name}' supprimé.")
 
     def draw(self):

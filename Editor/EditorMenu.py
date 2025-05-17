@@ -1,6 +1,5 @@
 import pygame
 from Editor.Square_editor.SquareEditor_ui import SquareEditorUi
-from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Editor.Square_Manager.SquareManagerUi import SquareManagerUi
 from UI_tools.BaseUi import BaseUI
 
@@ -20,7 +19,6 @@ class EditorMenu(BaseUI):
         labels_colors = [
             ("Edit Square", (70, 130, 180)),
             ("Manage squares", (60, 179, 113)),
-            ("Create Board", (186, 85, 211)),
             ("Go to menu", (234, 182, 118))
         ]
 
@@ -59,11 +57,6 @@ class EditorMenu(BaseUI):
                     print("Launching Square Manager...")
                     Manager = SquareManagerUi()
                     Manager.run()
-
-                elif label == "Create Board":
-                    print("Launching Board Creator...")
-                    Creator = SquareSelectorUi()
-                    Creator.run()
 
                 elif label == "Go to menu":
                     print("Returning to Menu...")

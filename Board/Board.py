@@ -31,7 +31,32 @@ class Board:
                
     def __init__(self):
 
-        self.__square_list = {}
+        self.__square_list = {
+            "default1": [
+                [40, 10, 10, 40],
+                [10, 10, 40, 30],
+                [30, 10, 40, 10],
+                [40, 40, 10, 40]
+            ],
+            "default2": [
+                [20, 20, 30, 30],
+                [10, 40, 40, 10],
+                [10, 30, 20, 20],
+                [40, 10, 10, 40]
+            ],
+            "default3": [
+                [10, 10, 10, 10],
+                [20, 20, 20, 20],
+                [30, 30, 30, 30],
+                [40, 40, 40, 40]
+            ],
+            "default4": [
+                [40, 30, 20, 10],
+                [10, 20, 30, 40],
+                [40, 30, 20, 10],
+                [10, 20, 30, 40]
+            ]            
+        }
 
         self.__board = {}
 
@@ -44,26 +69,9 @@ class Board:
 
     #saves the board in a json file
     def save_to_file(self, filename: str):
-        # Charger les anciennes données s’il y en a
-        if os.path.exists(filename) and os.path.getsize(filename) > 0:
-            with open(filename, "r") as f:
-                try:
-                    existing_data = json.load(f)
-                except json.JSONDecodeError:
-                    existing_data = {}
-        else:
-            existing_data = {}
-
-        # On récupère la partie "square" existante, ou on part d’un dict vide
-        existing_square = existing_data.get("square", {})
-
-        # Mise à jour des données (merge, remplace si même clé)
-        for k, v in self.__square_list.items():
-            existing_square[k] = v
-
         # Construction des données à sauvegarder
         data_to_save = {
-            "square": existing_square
+            "square": self.__square_list
         }
 
         # Sauvegarde dans le fichier (en écrasant le fichier, mais avec fusion des anciennes + nouvelles données)
@@ -115,6 +123,16 @@ class Board:
 
     def get_square_list(self):
         return self.__square_list
+    
+    def rotate_right(self, board):
+        return [list(reversed(col)) for col in zip(*board)]
+    
+    def rotate_left(self, board):
+        return [list(col) for col in zip(*board)][::-1]
+    
+    def flip_horizontal(self, board):
+        return [row[::-1] for row in board]
+    
 
 
 
