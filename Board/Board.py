@@ -58,7 +58,7 @@ class Board:
             ]            
         }
 
-        self.__board = {}
+        self.final_board = None
 
         self.__default_board = [[0 for _ in range(8)] for _ in range(8)]
 
@@ -69,12 +69,10 @@ class Board:
 
     #saves the board in a json file
     def save_to_file(self, filename: str):
-        # Construction des données à sauvegarder
         data_to_save = {
             "square": self.__square_list
         }
 
-        # Sauvegarde dans le fichier (en écrasant le fichier, mais avec fusion des anciennes + nouvelles données)
         with open(filename, "w") as f:
             json.dump(data_to_save, f, indent=4)
 
@@ -106,6 +104,14 @@ class Board:
                 print(f"Données chargées depuis '{filename}'.")
             except json.JSONDecodeError:
                 print(f"Erreur de lecture : le fichier '{filename}' n'est pas un JSON valide.")
+                
+    def create_final_board(self, matrix_8x8):
+        if len(matrix_8x8) != 8 or any(len(row) != 8 for row in matrix_8x8):
+            raise ValueError("Le tableau doit être une matrice 8x8.")
+
+        self.final_board = [row[:] for row in matrix_8x8]
+        
+        return [row[:] for row in matrix_8x8]
 
     
     #getter and setter for the board

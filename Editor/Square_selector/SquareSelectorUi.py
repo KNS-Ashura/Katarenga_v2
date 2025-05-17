@@ -3,6 +3,9 @@ import pygame
 from Board.Board import Board
 from Board.Board_draw_tools import Board_draw_tools
 from UI_tools.BaseUi import BaseUI
+from Game_ui.Katarenga import Katarenga
+from Game_ui.Congress import Congress
+from Game_ui.Isolation import Isolation
 
 class SquareSelectorUi(BaseUI):
     def __init__(self,gamemode, title="Select your square"):
@@ -124,20 +127,22 @@ class SquareSelectorUi(BaseUI):
                 print(f"Square accroché : {self.selected_square}")
                 return
 
-        if self.start_button_rect.collidepoint(x, y):
-            if self.is_board_filled():
-                print("Lancement de la partie")
-                #if gamemode == 1:
-                #    katarenga = Katarenga()
-                #    katarenga.run()
-                #elif gamemode == 2:
-                #    congress = Congress()
-                #    congress.run()
-                #elif gamemode == 3:
-                #    isolation = Isolation()
-                #    isolation.run()
-            else:
-                print("Le plateau n'est pas encore rempli.")
+        if self.is_board_filled():
+            print("Lancement de la partie")
+            
+            final_board = self.board_obj.create_final_board(self.board)
+            
+            if self.gamemode == 1:
+                katarenga = Katarenga(final_board)
+                katarenga.run()
+            elif self.gamemode == 2:
+                congress = Congress(final_board)
+                congress.run()
+            elif self.gamemode == 3:
+                isolation = Isolation(final_board)
+                isolation.run()
+        else:
+            print("Le plateau n'est pas encore rempli.")
 
         return
 
