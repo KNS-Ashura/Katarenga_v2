@@ -1,11 +1,18 @@
 import pygame
+import copy
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
 
 class Katarenga(BaseUI):
     def __init__(self, board, title="Katarenga"):
         super().__init__(title)
-        self.board = board
+
+        # Simple error checking
+        if board is None:
+            raise ValueError("Le plateau ne peut pas être None")
+        
+        
+        self.board = self.place_pawn_katarenga(board)
         self.board_ui = Board_draw_tools()
         
         self.cell_size = 60
@@ -20,6 +27,13 @@ class Katarenga(BaseUI):
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 40))
         
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
+        
+       
+        self.current_player = 1  
+        self.selected_pawn = None  
+        
+        
+        self.info_font = pygame.font.SysFont(None, 36)
 
     def run(self):
         while self.running:
@@ -35,26 +49,64 @@ class Katarenga(BaseUI):
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.back_button_rect.collidepoint(event.pos):
                     self.running = False
+                else:
+                    self.handle_board_click(event.pos)
 
-    def draw(self):
-        screen = self.get_screen()
-        screen.fill((30, 30, 30))
-        screen.blit(self.title_surface, self.title_rect)
+    def handle_board_click(self, pos):
+        x, y = pos
+        
+        # Check if the click is within the grid area
+        if (self.left_offset <= x < self.left_offset + self.grid_size and 
+            self.top_offset <= y < self.top_offset + self.grid_size):
+            
+            col = (x - self.left_offset) // self.cell_size
+            row = (y - self.top_offset) // self.cell_size
+            
+            # Valid coord
+            if 0 <= row < 8 and 0 <= col < 8:
+                self.process_move(row, col)
 
-        for row in range(8):
-            for col in range(8):
-                rect = pygame.Rect(
-                    col * self.cell_size + self.left_offset,
-                    row * self.cell_size + self.top_offset,
-                    self.cell_size,
-                    self.cell_size
-                )
-                value = self.board[row][col]
-                color = self.board_ui.get_color_from_board(value // 10)
-                pygame.draw.rect(screen, color, rect)
-                pygame.draw.rect(screen, (255, 255, 255), rect, 1)
+    def place_pawn_katarenga(self, board):
+        
+        modified_board = copy.deepcopy(board)
+        
+        # Pawn from player 2 
+        for col in range(8):
+            color_code = modified_board[0][col] // 10
+            modified_board[0][col] = color_code * 10 + 2
 
-        pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
-        back_text = pygame.font.SysFont(None, 36).render("Retour", True, (255, 255, 255))
-        screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
+        # Pawn from player 1 
+        for col in range(8):
+            color_code = modified_board[7][col] // 10
+            modified_board[7][col] = color_code * 10 + 1
+        
+        return modified_board
+    
+    def process_move(self, row, col):
+        cell_value = self.board[row][col]
+        player_on_cell = cell_value % 10
+        
+        if self.selected_pawn is None:
+            # Pawn selection
+            if player_on_cell == self.current_player:
+                self.selected_pawn = (row, col)
+                print(f"Pion sélectionné à ({row}, {col})")
+        else:
+            # Second click
+            selected_row, selected_col = self.selected_pawn
+            
+            if (row, col) == self.selected_pawn:
+                # Click again = deselect
+                self.selected_pawn = None
+                print("Pion désélectionné")
+            elif player_on_cell == self.current_player:
+                # Switch selection with same player
+                self.selected_pawn = (row, col)
+                print(f"Nouveau pion sélectionné à ({row}, {col})")
+            else:
+                if self.is_valid_move(selected_row, selected_col, row, col):
+                    self.make_move(selected_row, selected_col, row, col)
+                    self.selected_pawn = None
+                    self.switch_player()
+                else:
+                    print("Mouvement invalide")
