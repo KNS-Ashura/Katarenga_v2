@@ -21,7 +21,7 @@ class Board_draw_tools:
     
     def draw_corner_top_left(self,size):
         rect = pygame.Rect(
-            20,  # x = collé à gauche
+            340,  # x = collé à gauche
             20,  # y = collé en haut
             60,  # largeur
             60   # hauteur
@@ -31,7 +31,7 @@ class Board_draw_tools:
 
     def draw_corner_top_right(self,size):
         rect = pygame.Rect(
-            560,  
+            880,  
             20,  
             60,  
             60   
@@ -41,7 +41,7 @@ class Board_draw_tools:
 
     def draw_corner_bot_left(self,size):
         rect = pygame.Rect(
-            20,  
+            340,  
             560, 
             60,  
             60   
@@ -51,7 +51,7 @@ class Board_draw_tools:
 
     def draw_corner_bot_right(self,size):
         rect = pygame.Rect(
-            560,  
+            880,  
             560,  
             60,  
             60   
@@ -65,7 +65,7 @@ class Board_draw_tools:
 
     def draw_rectangle_left(self,size):
         rect = pygame.Rect(
-            20, # x = collé à gauche
+            340, # x = collé à gauche
             80, # y = collé en haut
             60, # largeur
             480 # hauteur
@@ -76,7 +76,7 @@ class Board_draw_tools:
 
     def draw_rectangle_right(self,size):
         rect = pygame.Rect(
-            560,  
+            880,  
             80,  
             60,  
             480 
@@ -87,7 +87,7 @@ class Board_draw_tools:
 
     def draw_rectangle_top(self,size):
         rect = pygame.Rect(
-            80, 
+            400, 
             20, 
             480, 
             60 
@@ -98,7 +98,7 @@ class Board_draw_tools:
 
     def draw_rectangle_bot(self,size):
         rect = pygame.Rect(
-            80, 
+            400, 
             560,  
             480,  
             60 
