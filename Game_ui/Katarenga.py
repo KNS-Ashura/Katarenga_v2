@@ -156,25 +156,28 @@ class Katarenga(BaseUI):
                     self.cell_size
                 )
                 
-                # Get cell value
+                # Get cell values
                 value = self.board[row][col]
                 color_code = value // 10
                 player_code = value % 10
                 
-                
+                # Draw cell color
                 color = self.board_ui.get_color_from_board(color_code)
                 pygame.draw.rect(screen, color, rect)
                 
                 # Highlight selected pawn
                 if self.selected_pawn == (row, col):
-                    pygame.draw.rect(screen, (255, 255, 0), rect, 4)  
+                    pygame.draw.rect(screen, (255, 255, 0), rect, 4)  # Yellow border for selected pawn
                 
-                
+                # Draw cell border
                 pygame.draw.rect(screen, (255, 255, 255), rect, 1)
                 
                 # Draw pawn if present
                 if player_code > 0:
                     self.draw_pawn(screen, rect, player_code)
+        
+        # Dessiner les corners du plateau
+        self.board_ui.draw_all_corners(screen)
 
         # Draw back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
@@ -184,6 +187,7 @@ class Katarenga(BaseUI):
         
         # Draw game info
         self.draw_game_info(screen)
+
 
     def draw_pawn(self, screen, rect, player):
         center_x = rect.centerx
