@@ -6,7 +6,7 @@ from Board.Board_draw_tools import Board_draw_tools
 class Katarenga(BaseUI):
     def __init__(self, board, title="Katarenga"):
         super().__init__(title)
-
+        
         # Simple error checking
         if board is None:
             raise ValueError("Le plateau ne peut pas être None")
@@ -51,7 +51,6 @@ class Katarenga(BaseUI):
                     self.running = False
                 else:
                     self.handle_board_click(event.pos)
-<<<<<<< HEAD
 
     def handle_board_click(self, pos):
         x, y = pos
@@ -113,16 +112,16 @@ class Katarenga(BaseUI):
                     print("Mouvement invalide")
 
     def is_valid_move(self, from_row, from_col, to_row, to_col):
-      
+       
         row_diff = abs(to_row - from_row)
         col_diff = abs(to_col - from_col)
-      
-      
+    
+    
         if row_diff <= 1 and col_diff <= 1 and (row_diff + col_diff > 0):
             # Check if the destination cell is empty or occupied by an allies pawn
             destination_player = self.board[to_row][to_col] % 10
             return destination_player != self.current_player
-      
+    
         return False
 
     def make_move(self, from_row, from_col, to_row, to_col):
@@ -141,24 +140,12 @@ class Katarenga(BaseUI):
     def switch_player(self):
         self.current_player = 2 if self.current_player == 1 else 1
         print(f"Tour du joueur {self.current_player}")
-=======
->>>>>>> 8096dd1d50d088f3162e2768e062f0af8a239fba
 
-    def handle_board_click(self, pos):
-        x, y = pos
-        
-        # Check if the click is within the grid area
-        if (self.left_offset <= x < self.left_offset + self.grid_size and 
-            self.top_offset <= y < self.top_offset + self.grid_size):
-            
-            col = (x - self.left_offset) // self.cell_size
-            row = (y - self.top_offset) // self.cell_size
-            
-            # Valid coord
-            if 0 <= row < 8 and 0 <= col < 8:
-                self.process_move(row, col)
+    def draw(self):
+        screen = self.get_screen()
+        screen.fill((30, 30, 30))
+        screen.blit(self.title_surface, self.title_rect)
 
-<<<<<<< HEAD
         # Draw the board
         for row in range(8):
             for col in range(8):
@@ -250,49 +237,3 @@ class Katarenga(BaseUI):
                     player2_count += 1
         
         return player1_count, player2_count
-=======
-    def place_pawn_katarenga(self, board):
-        
-        modified_board = copy.deepcopy(board)
-        
-        # Pawn from player 2 
-        for col in range(8):
-            color_code = modified_board[0][col] // 10
-            modified_board[0][col] = color_code * 10 + 2
-
-        # Pawn from player 1 
-        for col in range(8):
-            color_code = modified_board[7][col] // 10
-            modified_board[7][col] = color_code * 10 + 1
-        
-        return modified_board
-    
-    def process_move(self, row, col):
-        cell_value = self.board[row][col]
-        player_on_cell = cell_value % 10
-        
-        if self.selected_pawn is None:
-            # Pawn selection
-            if player_on_cell == self.current_player:
-                self.selected_pawn = (row, col)
-                print(f"Pion sélectionné à ({row}, {col})")
-        else:
-            # Second click
-            selected_row, selected_col = self.selected_pawn
-            
-            if (row, col) == self.selected_pawn:
-                # Click again = deselect
-                self.selected_pawn = None
-                print("Pion désélectionné")
-            elif player_on_cell == self.current_player:
-                # Switch selection with same player
-                self.selected_pawn = (row, col)
-                print(f"Nouveau pion sélectionné à ({row}, {col})")
-            else:
-                if self.is_valid_move(selected_row, selected_col, row, col):
-                    self.make_move(selected_row, selected_col, row, col)
-                    self.selected_pawn = None
-                    self.switch_player()
-                else:
-                    print("Mouvement invalide")
->>>>>>> 8096dd1d50d088f3162e2768e062f0af8a239fba
