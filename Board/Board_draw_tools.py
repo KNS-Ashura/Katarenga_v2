@@ -3,53 +3,47 @@ import sys
 
 class Board_draw_tools:
         
-    def draw_all_corners(self,size):
+    def draw_all_corners(self, surface):
         
             #DRAW CORNER
+        self.draw_corner_top_left(surface)
+        self.draw_corner_top_right(surface)
+        self.draw_corner_bot_left(surface)
+        self.draw_corner_bot_right(surface)
 
-            self.draw_corner_top_left(size)
-            self.draw_corner_top_right(size)
-            self.draw_corner_bot_left(size)
-            self.draw_corner_bot_right(size)
-            
-            #DRAW RECTANGLE
-
-            self.draw_rectangle_left(size)
-            self.draw_rectangle_right(size)
-            self.draw_rectangle_top(size)
-            self.draw_rectangle_bot(size)
+        #DRAW RECTANGLE 
+        self.draw_rectangle_left(surface)
+        self.draw_rectangle_right(surface)
+        self.draw_rectangle_top(surface)
+        self.draw_rectangle_bot(surface)
     
-    def draw_corner_top_left(self,size):
-        rect = pygame.Rect(
-            340,  # x = collé à gauche
-            20,  # y = collé en haut
-            60,  # largeur
-            60   # hauteur
-        )
-        pygame.draw.rect(size, (255, 165, 0), rect) 
-        pygame.draw.rect(size, (255, 255, 255), rect, 1)  
+    def draw_corner_top_left(self,surface):
+        
+        rect = pygame.Rect(340, 20, 60, 60)
+        pygame.draw.rect(surface, (255, 165, 0), rect)
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1)
 
-    def draw_corner_top_right(self,size):
+    def draw_corner_top_right(self,surface):
         rect = pygame.Rect(
             880,  
             20,  
             60,  
             60   
         )
-        pygame.draw.rect(size, (255, 165, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1)  
+        pygame.draw.rect(surface, (255, 165, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1)  
 
-    def draw_corner_bot_left(self,size):
+    def draw_corner_bot_left(self,surface):
         rect = pygame.Rect(
             340,  
             560, 
             60,  
             60   
         )
-        pygame.draw.rect(size, (255, 165, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1)  
+        pygame.draw.rect(surface, (255, 165, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1)  
 
-    def draw_corner_bot_right(self,size):
+    def draw_corner_bot_right(self,surface):
         rect = pygame.Rect(
             880,  
             560,  
@@ -57,13 +51,13 @@ class Board_draw_tools:
             60   
         )
 
-        pygame.draw.rect(size, (255, 165, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1)  
+        pygame.draw.rect(surface, (255, 165, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1)  
 
         
     #DRAW RECTANGLE DESIGN KATARENGA
 
-    def draw_rectangle_left(self,size):
+    def draw_rectangle_left(self,surface):
         rect = pygame.Rect(
             340, # x = collé à gauche
             80, # y = collé en haut
@@ -71,10 +65,10 @@ class Board_draw_tools:
             480 # hauteur
         )
 
-        pygame.draw.rect(size, (100, 65, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1)  
+        pygame.draw.rect(surface, (100, 65, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1)  
 
-    def draw_rectangle_right(self,size):
+    def draw_rectangle_right(self,surface):
         rect = pygame.Rect(
             880,  
             80,  
@@ -82,10 +76,10 @@ class Board_draw_tools:
             480 
         )
 
-        pygame.draw.rect(size, (100, 65, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1) 
+        pygame.draw.rect(surface, (100, 65, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1) 
 
-    def draw_rectangle_top(self,size):
+    def draw_rectangle_top(self,surface):
         rect = pygame.Rect(
             400, 
             20, 
@@ -93,10 +87,10 @@ class Board_draw_tools:
             60 
         )
 
-        pygame.draw.rect(size, (100, 65, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1) 
+        pygame.draw.rect(surface, (100, 65, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1) 
 
-    def draw_rectangle_bot(self,size):
+    def draw_rectangle_bot(self,surface):
         rect = pygame.Rect(
             400, 
             560,  
@@ -104,8 +98,8 @@ class Board_draw_tools:
             60 
         )
 
-        pygame.draw.rect(size, (100, 65, 0), rect)  
-        pygame.draw.rect(size, (255, 255, 255), rect, 1)  
+        pygame.draw.rect(surface, (100, 65, 0), rect)  
+        pygame.draw.rect(surface, (255, 255, 255), rect, 1)  
 
     def get_color_from_board(self, code):
         if code == 1:
