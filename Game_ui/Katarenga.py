@@ -7,7 +7,6 @@ class Katarenga(BaseUI):
     def __init__(self, board, title="Katarenga"):
         super().__init__(title)
         
-        # Simple error checking
         if board is None:
             raise ValueError("Le plateau ne peut pas être None")
         
@@ -181,6 +180,8 @@ class Katarenga(BaseUI):
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = pygame.font.SysFont(None, 36).render("Retour", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
+        
+        self.board_ui.draw_all_corners(self.get_screen)
         
         # Draw game info
         self.draw_game_info(screen)
