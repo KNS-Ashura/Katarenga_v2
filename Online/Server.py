@@ -68,10 +68,11 @@ def remove_disconnected_clients(client, clients_list):
 
 
 #boucle principale a appeler dans le main
-if __name__ == "__main__":
-    HOST = '192.168.146.1'
-    PORT = 5000
-    start_server(HOST, PORT)
+def launch_server_session(host="192.168.146.1", port=5000):
+    global server
+    clients = []
+
+    start_server(host, port)
 
     while True:
         accept_new_clients(server, clients)
