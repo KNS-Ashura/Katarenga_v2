@@ -4,7 +4,7 @@ from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Game_ui.move_rules import Moves_rules
-from Online.Join_game import JoinGameUI
+from Online.Join_game import JoinGameUI 
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):

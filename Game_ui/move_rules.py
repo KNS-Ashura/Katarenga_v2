@@ -50,7 +50,7 @@ class Moves_rules:
     def green_case_move(self, x_start, y_start, x_end, y_end):
         if self.__board[x_end][y_end] == 0:
             return False
-        # MOUVEMENT EN L
+        #L MOUVEMENT
         dx, dy = abs(x_end - x_start), abs(y_end - y_start)
         if not ((dx == 2 and dy == 1) or (dx == 1 and dy == 2)):
             return False
