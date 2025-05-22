@@ -142,8 +142,8 @@ class Katarenga(BaseUI):
             row = (y - self.top_offset) // self.cell_size
             
             # Valid coord
-            if 0 <= row < 8 and 0 <= col < 8:
-                self.process_move(row, col)
+        if 0 <= row < self.grid_dim and 0 <= col < self.grid_dim:
+            self.process_move(row, col)
 
     def place_pawn_katarenga(self, board):
         new_board = copy.deepcopy(board)
