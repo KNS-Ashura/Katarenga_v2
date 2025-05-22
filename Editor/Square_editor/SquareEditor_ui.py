@@ -7,7 +7,7 @@ from UI_tools.BaseUi import BaseUI
 
 class SquareEditorUi(BaseUI):
     def __init__(self, title="Square A Editor"):
-        super().__init__(title)  # Appelle l'init de BaseUI
+        super().__init__(title)
 
         self.board_obj = Board()
         self.board_ui = Board_draw_tools()
@@ -16,7 +16,6 @@ class SquareEditorUi(BaseUI):
         self.cell_size = 100
         self.grid_size = self.cell_size * 4
 
-        # Utilisation de self.get_width() et get_height() depuis BaseUI
         screen_width = self.get_width()
 
         self.title_font = pygame.font.SysFont(None, 48)
@@ -30,12 +29,10 @@ class SquareEditorUi(BaseUI):
 
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
 
-        # Zone de texte pour entrer un commentaire
         self.text_input_rect = pygame.Rect(self.left_offset, self.top_offset + self.grid_size + 20, self.grid_size, 40)
         self.text_input = ""
         self.text_active = False
 
-        # Le bouton de sauvegarde sous la zone de texte
         self.save_button_rect = pygame.Rect(self.left_offset, self.text_input_rect.bottom + 10, self.grid_size, 40)
 
     def run(self):
@@ -56,7 +53,7 @@ class SquareEditorUi(BaseUI):
                     if event.key == pygame.K_BACKSPACE:
                         self.text_input = self.text_input[:-1]
                     elif event.key == pygame.K_RETURN:
-                        self.text_active = False  # Désactiver la saisie
+                        self.text_active = False
                     else:
                         self.text_input += event.unicode
 
@@ -68,7 +65,6 @@ class SquareEditorUi(BaseUI):
             return
 
         if self.save_button_rect.collidepoint(x, y):
-            # Vérification que le texte est non vide avant de sauvegarder
             if self.text_input.strip() == "":
                 print("Erreur : Un texte doit être saisi avant la sauvegarde.")
                 return
@@ -78,7 +74,7 @@ class SquareEditorUi(BaseUI):
                 self.board_obj.set_square_list(self.text_input, self.square)
                 filename = "game_data.json"
                 self.board_obj.check_or_create_file(filename)
-                self.board_obj.save_to_file(filename)  # Ajouter le texte à la sauvegarde
+                self.board_obj.save_to_file(filename)
             else:
                 print("Erreur : Toutes les cases doivent être non nulles (différentes de 0)")
 
@@ -96,7 +92,6 @@ class SquareEditorUi(BaseUI):
             self.square[row][col] = new_color_code * 10 + (value % 10)
             print(f"Updated board: {self.square}")
 
-        # Activer/désactiver la saisie de texte quand la zone de texte est cliquée
         if self.text_input_rect.collidepoint(x, y):
             self.text_active = True
 
@@ -123,13 +118,11 @@ class SquareEditorUi(BaseUI):
         back_text = self.button_font.render("Retour", True, (255, 255, 255))
         self.get_screen().blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
 
-        # Afficher le bouton de sauvegarde sous la zone de texte
         pygame.draw.rect(self.get_screen(), (70, 70, 70), self.save_button_rect)
         pygame.draw.rect(self.get_screen(), (255, 255, 255), self.save_button_rect, 2)
         save_text = self.button_font.render("Sauvegarder", True, (255, 255, 255))
         self.get_screen().blit(save_text, save_text.get_rect(center=self.save_button_rect.center))
 
-        # Afficher la zone de texte
         pygame.draw.rect(self.get_screen(), (255, 255, 255), self.text_input_rect, 2)
         text_surface = pygame.font.SysFont(None, 36).render(self.text_input, True, (255, 255, 255))
         self.get_screen().blit(text_surface, (self.text_input_rect.x + 5, self.text_input_rect.y + 5))
