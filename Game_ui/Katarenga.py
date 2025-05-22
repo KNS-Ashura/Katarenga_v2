@@ -289,7 +289,7 @@ class Katarenga(BaseUI):
         
         text_surface = self.info_font.render(player_text, True, player_color)
         text_rect = text_surface.get_rect()
-        text_rect.topleft = (self.left_offset, self.top_offset + self.grid_size + 20)
+        text_rect.topleft = (self.left_offset, self.top_offset + self.grid_size + 80)
         screen.blit(text_surface, text_rect)
         
         # Display instructions
