@@ -1,11 +1,10 @@
 import pygame
 import sys
-import threading
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Game_ui.move_rules import Moves_rules
-
+from Online.Join_game import JoinGameUI
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
@@ -94,7 +93,8 @@ class MainMenuUI(BaseUI):
                 elif label == "Host a game":
                     print("[TODO] Prompt for server IP and port...")
                 elif label == "Join a game":
-                    print("[TODO] Prompt for server IP and join game...")
+                    join_game_ui = JoinGameUI()
+                    join_game_ui.run()
 
     def update(self):
         pass
