@@ -105,7 +105,11 @@ class Katarenga(BaseUI):
                 if self.is_valid_move(selected_row, selected_col, row, col):
                     self.make_move(selected_row, selected_col, row, col)
                     self.selected_pawn = None
-                    self.switch_player()
+                    
+                    winner = self.check_victory()
+                    if winner == 0:
+                        self.switch_player()
+                        
                 else:
                     print("Mouvement invalide")
 
@@ -230,3 +234,27 @@ class Katarenga(BaseUI):
                     player2_count += 1
         
         return player1_count, player2_count
+    
+    def check_victory(self):
+        player1_count, player2_count = self.count_pawns()
+        
+        if player1_count == 0:
+            print("Le joueur 2 a gagné (plus de pions pour le joueur 1) !")
+            self.running = False
+            return 2
+        if player2_count == 0:
+            print("Le joueur 1 a gagné (plus de pions pour le joueur 2) !")
+            self.running = False
+            return 1
+
+        if self.board[9][0] % 10 == 2 and self.board[9][9] % 10 == 2:
+            print("Le joueur 1 a gagné (occupé les coins en bas à gauche) !")
+            self.running = False
+            return 1
+
+        if self.board[0][0] % 10 == 1 and self.board[0][9] % 10 == 1:
+            print("Le joueur 2 a gagné (occupé les coins en haut gauche et droite) !")
+            self.running = False
+            return 2
+
+        return 0
