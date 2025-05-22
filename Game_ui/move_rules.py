@@ -59,17 +59,17 @@ class Moves_rules:
 
         x, y = x_start + dx, y_start + dy
         while (x, y) != (x_end, y_end):
-            # Check for obsatcles
-            if self.board[x][y] % 10 != 0:
+            # Check for obstacles
+            if self.__board[x][y] % 10 != 0:
                 return False
 
-            #Check if its red or not,
-            if self.board[x][y] // 10 == 4:
+            # Check if its red or not
+            if self.__board[x][y] // 10 == 4:
                 return False
             x, y = x + dx, y + dy
 
-            # Check end case
-        end_piece = self.board[x_end][y_end] % 10
+        # Check end case
+        end_piece = self.__board[x_end][y_end] % 10
         current_player = self.__board[x_start][y_start] % 10
 
         return end_piece == 0 or (end_piece != current_player)

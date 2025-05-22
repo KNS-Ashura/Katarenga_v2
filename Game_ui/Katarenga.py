@@ -2,7 +2,7 @@ import pygame
 import copy
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
-from move_rules import Moves_rules
+from Game_ui.move_rules import Moves_rules
 
 class Katarenga(BaseUI):
     def __init__(self, board, title="Katarenga"):
