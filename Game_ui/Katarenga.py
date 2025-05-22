@@ -68,15 +68,15 @@ class Katarenga(BaseUI):
     def place_pawn_katarenga(self, board):
         new_board = copy.deepcopy(board)
 
-        # Ligne d'index 1, colonnes 1 à 9
+        # First row, columns 1 to 9 (top of the board)
         for col in range(1, 9):
             color = new_board[1][col] // 10
-            new_board[1][col] = color * 10 + 1  # Joueur 1
+            new_board[1][col] = color * 10 + 2  # Player 2
 
-        # Avant-dernière ligne (index 8), colonnes 1 à 9
+        # Last row, columns 1 to 9
         for col in range(1, 9):
             color = new_board[8][col] // 10
-            new_board[8][col] = color * 10 + 2  # Joueur 2
+            new_board[8][col] = color * 10 + 1  # Player 1
 
         return new_board
         

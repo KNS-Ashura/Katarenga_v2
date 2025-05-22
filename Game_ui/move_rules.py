@@ -7,22 +7,28 @@ class Moves_rules:
         dx, dy = x_end - x_start, y_end - y_start
         if abs(dx) != abs(dy): 
             return False
-        
-        # Check obstacles
+
+        # Check direction
         sx = 1 if dx > 0 else -1
         sy = 1 if dy > 0 else -1
-        
+
+        # Check obstacles and yellow cases on the path (excluding the destination)
         for i in range(1, abs(dx)):
-            x, y = x_start + i*sx, y_start + i*sy
-            if self.__board[x][y] % 10 != 0:  
+            x, y = x_start + i * sx, y_start + i * sy
+
+            if self.__board[x][y] % 10 != 0:
                 return False
-                
+
+            if self.__board[x][y] // 10 == 3: 
+                return False
+
         # Check end case
         end_piece = self.__board[x_end][y_end] % 10
         current_player = self.__board[x_start][y_start] % 10
-        
-        # The end case must be empty or contain an opponent's piece
+
         return end_piece == 0 or (end_piece != current_player)
+
+
 
     def blue_case_move(self, x_start, y_start, x_end, y_end):
         dx, dy = abs(x_end - x_start), abs(y_end - y_start)
