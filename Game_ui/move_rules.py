@@ -3,6 +3,8 @@ class Moves_rules:
         self.__board = board
 
     def yellow_case_move(self, x_start, y_start, x_end, y_end):
+        if self.__board[x_end][y_end] == 0:
+            return False
         # Diagonal movement
         dx, dy = x_end - x_start, y_end - y_start
         if abs(dx) != abs(dy): 
@@ -31,6 +33,9 @@ class Moves_rules:
 
 
     def blue_case_move(self, x_start, y_start, x_end, y_end):
+        if self.__board[x_end][y_end] == 0:
+            return False
+        #KING MOVEMENT
         dx, dy = abs(x_end - x_start), abs(y_end - y_start)
         if dx > 1 or dy > 1:
             return False
@@ -43,6 +48,8 @@ class Moves_rules:
         return end_piece == 0 or (end_piece != current_player)
 
     def green_case_move(self, x_start, y_start, x_end, y_end):
+        if self.__board[x_end][y_end] == 0:
+            return False
         # MOUVEMENT EN L
         dx, dy = abs(x_end - x_start), abs(y_end - y_start)
         if not ((dx == 2 and dy == 1) or (dx == 1 and dy == 2)):
@@ -56,6 +63,8 @@ class Moves_rules:
         return end_piece == 0 or (end_piece != current_player)
 
     def red_case_move(self, x_start, y_start, x_end, y_end):
+        if self.__board[x_end][y_end] == 0:
+            return False
         # HORIZONTAL OR VERTICAL MOVEMENT
         if x_start != x_end and y_start != y_end:
             return False
@@ -72,6 +81,7 @@ class Moves_rules:
             # Check if its red or not
             if self.__board[x][y] // 10 == 4:
                 return False
+            
             x, y = x + dx, y + dy
 
         # Check end case

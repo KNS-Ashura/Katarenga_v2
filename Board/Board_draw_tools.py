@@ -3,6 +3,8 @@ class Board_draw_tools:
     def get_color_from_board(self, code):
         if code == 1:
             return (100, 160, 230)  
+        elif code == 0:
+            return (50, 50, 50)
         elif code == 2:
             return (125, 190, 155)  
         elif code == 3:
@@ -11,8 +13,9 @@ class Board_draw_tools:
             return (235, 115, 115)  
         elif code == 5:
             return (128, 0, 128)
-        else:
-            return (50, 50, 50) 
+        elif code == 6:
+            return (110, 110, 110)
+             
         
     def get_colors(self):
         return {

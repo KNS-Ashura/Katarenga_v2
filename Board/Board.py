@@ -124,8 +124,8 @@ class Board:
 
         new_board[0][0] = 50                   # top-left
         new_board[0][-1] = 50                  # top-right
-        new_board[-1][0] = 50                  # bottom-left
-        new_board[-1][-1] = 50                 # bottom-right
+        new_board[-1][0] = 60                  # bottom-left
+        new_board[-1][-1] = 60                 # bottom-right
 
         return new_board
 
