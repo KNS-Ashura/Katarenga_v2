@@ -130,7 +130,9 @@ class SquareSelectorUi(BaseUI):
         if self.is_board_filled():
             print("Lancement de la partie")
             
-            final_board = self.board_obj.create_final_board(self.board)
+            pre_final_board = self.board_obj.create_final_board(self.board)
+            
+            final_board = self.board_obj.add_border_and_corners(pre_final_board)
             
             if self.gamemode == 1:
                 katarenga = Katarenga(final_board)

@@ -112,6 +112,25 @@ class Board:
         self.final_board = [row[:] for row in matrix_8x8]
         
         return [row[:] for row in matrix_8x8]
+    
+    def add_border_and_corners(self,board):
+        cols = len(board[0])
+
+        new_board = [[0] + row + [0] for row in board]
+
+        zero_row = [0] * (cols + 2)
+        new_board.insert(0, zero_row[:])
+        new_board.append(zero_row[:])
+
+        new_board[0][0] = 50                   # top-left
+        new_board[0][-1] = 50                  # top-right
+        new_board[-1][0] = 50                  # bottom-left
+        new_board[-1][-1] = 50                 # bottom-right
+
+        return new_board
+
+    
+    
 
     
     #getter and setter for the board

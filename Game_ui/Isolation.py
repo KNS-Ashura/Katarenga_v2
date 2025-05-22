@@ -9,7 +9,7 @@ class Isolation(BaseUI):
         self.board_ui = Board_draw_tools()
         
         self.cell_size = 60
-        self.grid_dim = 8
+        self.grid_dim = 10
         self.grid_size = self.cell_size * self.grid_dim
         
         self.top_offset = 80
@@ -41,8 +41,8 @@ class Isolation(BaseUI):
         screen.fill((30, 30, 30))
         screen.blit(self.title_surface, self.title_rect)
 
-        for row in range(8):
-            for col in range(8):
+        for row in range(self.grid_dim):
+            for col in range(self.grid_dim):
                 rect = pygame.Rect(
                     col * self.cell_size + self.left_offset,
                     row * self.cell_size + self.top_offset,

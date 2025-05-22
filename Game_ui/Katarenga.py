@@ -15,7 +15,7 @@ class Katarenga(BaseUI):
         self.board_ui = Board_draw_tools()
         
         self.cell_size = 60
-        self.grid_dim = 8
+        self.grid_dim = 10
         self.grid_size = self.cell_size * self.grid_dim
         
         self.top_offset = 80
@@ -66,21 +66,20 @@ class Katarenga(BaseUI):
                 self.process_move(row, col)
 
     def place_pawn_katarenga(self, board):
-        
-        modified_board = copy.deepcopy(board)
-        
-        # Pawn from player 2 
-        for col in range(8):
-            color_code = modified_board[0][col] // 10
-            modified_board[0][col] = color_code * 10 + 2
+        new_board = copy.deepcopy(board)
 
-        # Pawn from player 1 
-        for col in range(8):
-            color_code = modified_board[7][col] // 10
-            modified_board[7][col] = color_code * 10 + 1
+        # Ligne d'index 1, colonnes 1 à 9
+        for col in range(1, 9):
+            color = new_board[1][col] // 10
+            new_board[1][col] = color * 10 + 1  # Joueur 1
+
+        # Avant-dernière ligne (index 8), colonnes 1 à 9
+        for col in range(1, 9):
+            color = new_board[8][col] // 10
+            new_board[8][col] = color * 10 + 2  # Joueur 2
+
+        return new_board
         
-        return modified_board
-    
     def process_move(self, row, col):
         cell_value = self.board[row][col]
         player_on_cell = cell_value % 10
@@ -146,8 +145,8 @@ class Katarenga(BaseUI):
         screen.blit(self.title_surface, self.title_rect)
 
         # Draw the board
-        for row in range(8):
-            for col in range(8):
+        for row in range(self.grid_dim):
+            for col in range(self.grid_dim):
                 rect = pygame.Rect(
                     col * self.cell_size + self.left_offset,
                     row * self.cell_size + self.top_offset,
@@ -175,16 +174,11 @@ class Katarenga(BaseUI):
                 if player_code > 0:
                     self.draw_pawn(screen, rect, player_code)
         
-        # Dessiner les corners du plateau
-        self.board_ui.draw_all_corners(screen)
-
         # Draw back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = pygame.font.SysFont(None, 36).render("Retour", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
-        
-        self.board_ui.draw_all_corners(self.get_screen)
         
         # Draw game info
         self.draw_game_info(screen)
@@ -215,7 +209,7 @@ class Katarenga(BaseUI):
         
         text_surface = self.info_font.render(player_text, True, player_color)
         text_rect = text_surface.get_rect()
-        text_rect.topleft = (self.left_offset, self.top_offset + self.grid_size + 20)
+        text_rect.topleft = (self.left_offset, self.top_offset + self.grid_size + 40)
         screen.blit(text_surface, text_rect)
         
         # Display instructions
@@ -233,8 +227,8 @@ class Katarenga(BaseUI):
         player1_count = 0
         player2_count = 0
         
-        for row in range(8):
-            for col in range(8):
+        for row in range(10):
+            for col in range(10):
                 player = self.board[row][col] % 10
                 if player == 1:
                     player1_count += 1
