@@ -53,22 +53,25 @@ class Moves_rules:
         # HORIZONTAL OR VERTICAL MOVEMENT
         if x_start != x_end and y_start != y_end:
             return False
-            
-        
+
         dx = 0 if x_start == x_end else (1 if x_end > x_start else -1)
         dy = 0 if y_start == y_end else (1 if y_end > y_start else -1)
-        
-        # Check obstacles
+
         x, y = x_start + dx, y_start + dy
         while (x, y) != (x_end, y_end):
-            if self.__board[x][y] % 10 != 0:  
+            # Check for obsatcles
+            if self.board[x][y] % 10 != 0:
+                return False
+
+            #Check if its red or not,
+            if self.board[x][y] // 10 == 4:
                 return False
             x, y = x + dx, y + dy
-            
-        
-        end_piece = self.__board[x_end][y_end] % 10
+
+            # Check end case
+        end_piece = self.board[x_end][y_end] % 10
         current_player = self.__board[x_start][y_start] % 10
-        
+
         return end_piece == 0 or (end_piece != current_player)
     
     def verify_move(self, case_color, x_start, y_start, x_end, y_end):
