@@ -1,9 +1,11 @@
 import pygame
 import sys
+import threading
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Game_ui.move_rules import Moves_rules
+
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
@@ -12,7 +14,7 @@ class MainMenuUI(BaseUI):
         btn_width = 300
         btn_height = 80
         spacing = 40
-        num_buttons = 3
+        num_buttons = 5  # Adjusted for the new layout
 
         total_height = num_buttons * btn_height + (num_buttons - 1) * spacing
         start_y = (self.get_height() - total_height) // 2 - 100
@@ -31,8 +33,24 @@ class MainMenuUI(BaseUI):
             rect = pygame.Rect((x_center - 50), start_y + i * (btn_height + spacing), btn_width, btn_height)
             self.buttons.append({"label": label, "rect": rect, "color": color})
 
-    def run(self):
+        # Multiplayer buttons on the left side
+        side_x = 80
+        side_y = self.get_height() // 2 - 100
+        side_spacing = 120
+        side_btn_width = 200
 
+        self.buttons.append({
+            "label": "Host a game",
+            "rect": pygame.Rect(side_x, side_y, side_btn_width, btn_height),
+            "color": (100, 149, 237)
+        })
+        self.buttons.append({
+            "label": "Join a game",
+            "rect": pygame.Rect(side_x, side_y + side_spacing, side_btn_width, btn_height),
+            "color": (72, 209, 204)
+        })
+
+    def run(self):
         while self.running:
             self.handle_events()
             self.update()
@@ -73,6 +91,10 @@ class MainMenuUI(BaseUI):
                     editor_menu.run()
                 elif label == "Leave Game":
                     self.running = False
+                elif label == "Host a game":
+                    print("[TODO] Prompt for server IP and port...")
+                elif label == "Join a game":
+                    print("[TODO] Prompt for server IP and join game...")
 
     def update(self):
         pass
