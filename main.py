@@ -3,8 +3,15 @@ import sys
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
+<<<<<<< HEAD
 from Game_ui.move_rules import Moves_rules
 from Online.Join_game import JoinGameUI 
+=======
+from Game_ui.move_rules import *
+from Online.Join_game import JoinGameUI
+from threading import *
+from Online.Server import *
+>>>>>>> 963c379eb9282afd007d1f5a0d044ebca9032041
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
