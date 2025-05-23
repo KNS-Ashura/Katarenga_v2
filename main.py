@@ -20,7 +20,7 @@ class MainMenuUI(BaseUI):
         btn_width = 300
         btn_height = 80
         spacing = 40
-        num_buttons = 5  # Adjusted for the new layout
+        num_buttons = 5  
 
         total_height = num_buttons * btn_height + (num_buttons - 1) * spacing
         start_y = (self.get_height() - total_height) // 2 - 100
