@@ -3,15 +3,10 @@ import sys
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
-<<<<<<< HEAD
-from Game_ui.move_rules import Moves_rules
-from Online.Join_game import JoinGameUI 
-=======
 from Game_ui.move_rules import *
 from Online.Join_game import JoinGameUI
-from threading import *
-from Online.Server import *
->>>>>>> 963c379eb9282afd007d1f5a0d044ebca9032041
+from Online.Server import launch_server_session
+
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
@@ -99,7 +94,9 @@ class MainMenuUI(BaseUI):
                     self.running = False
                 elif label == "Host a game":
                     print("[TODO] Prompt for server IP and port...")
+                    launch_server_session()
                 elif label == "Join a game":
+                    print("Je cherche une partie")
                     join_game_ui = JoinGameUI()
                     join_game_ui.run()
 

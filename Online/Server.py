@@ -68,7 +68,7 @@ def remove_disconnected_clients(client, clients_list):
 
 
 #boucle principale a appeler dans le main
-def launch_server_session(host="192.168.146.1", port=5000):
+def launch_server_session(host="192.168.1.14", port=5000):
     global server
     clients = []
 

@@ -8,6 +8,7 @@ import socket
 import time
 import threading
 
+
 def connect_to_server(host, port):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.setblocking(False)  #socket non bloquant
@@ -90,10 +91,10 @@ def handle_server_message(message, game_state):
         
 
 
-def main():
-    host = "127.0.0.1"
-    port = 50000
-    client_socket = connect_to_server(host, port)
+def main(ip_adress):
+    
+    port = 5000
+    client_socket = connect_to_server(ip_adress, port)
     game_state = {}
 
     while True:
