@@ -21,7 +21,7 @@ class MainMenuUI(BaseUI):
         start_y = (self.get_height() - total_height) // 2 - 100
         x_center = (self.get_width() - btn_width) // 2
 
-        labels_colors = [
+        labels_colors = [ 
             ("Katarenga", (70, 130, 180)),
             ("Congress", (60, 179, 113)),
             ("Isolation", (220, 20, 60)),
@@ -93,12 +93,28 @@ class MainMenuUI(BaseUI):
                 elif label == "Leave Game":
                     self.running = False
                 elif label == "Host a game":
-                    print("[TODO] Prompt for server IP and port...")
+                    print("[INFO] Starting server...")
+
+                    from Online.Server import get_local_ip
+    
+                    local_ip = get_local_ip()
+                    print(f"[INFO] Server will start on: {local_ip}:5000")
+                    print(f"[INFO] Other players should connect to: {local_ip}")
+    
                     launch_server_session()
                 elif label == "Join a game":
                     print("Je cherche une partie")
+                    from Online.Join_game import JoinGameUI
                     join_game_ui = JoinGameUI()
                     join_game_ui.run()
+
+                    ip_address = join_game_ui.get_input_ip()
+                    if ip_address:
+                        print(f" Connecting to server at {ip_address}:5000")
+                        from Online.Client import start_client
+                        start_client(ip_address, 5000)
+                    else:
+                        print("No IP entered, returning to main menu.")
 
     def update(self):
         pass

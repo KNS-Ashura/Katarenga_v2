@@ -5,7 +5,7 @@ from UI_tools.BaseUi import BaseUI
 class JoinGameUI(BaseUI):
     def __init__(self, title="Join a Game"):
         super().__init__(title)
-
+        self.running = True 
         # Fonts
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
@@ -157,6 +157,7 @@ if __name__ == "__main__":
     print("Adresse IP saisie :", ip_address)
 
     if ip_address:
-        # Import ici pour éviter l'import circulaire
+        # pr eviter une boucle d'import
+        
         from Online.Client import start_client
         start_client(ip_address, 5000)
