@@ -150,6 +150,8 @@ class JoinGameUI(BaseUI):
 
 
 if __name__ == "__main__":
+    from Online.Client import start_client
+    
     app = JoinGameUI()
     app.run()
 
@@ -157,7 +159,5 @@ if __name__ == "__main__":
     print("Adresse IP saisie :", ip_address)
 
     if ip_address:
-        # pr eviter une boucle d'import
         
-        from Online.Client import start_client
         start_client(ip_address, 5000)

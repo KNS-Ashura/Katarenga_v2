@@ -4,13 +4,13 @@ from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Game_ui.move_rules import *
-from Online.Join_game import JoinGameUI
-from Online.Server import launch_server_session
+from Online.multiplayer_handler import MultiplayerHandler
 
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
         super().__init__(title)
+        self.multiplayer_handler = MultiplayerHandler()
 
         btn_width = 300
         btn_height = 80
@@ -93,28 +93,9 @@ class MainMenuUI(BaseUI):
                 elif label == "Leave Game":
                     self.running = False
                 elif label == "Host a game":
-                    print("[INFO] Starting server...")
-
-                    from Online.Server import get_local_ip
-    
-                    local_ip = get_local_ip()
-                    print(f"[INFO] Server will start on: {local_ip}:5000")
-                    print(f"[INFO] Other players should connect to: {local_ip}")
-    
-                    launch_server_session()
+                    self.multiplayer_handler.host_game()
                 elif label == "Join a game":
-                    print("Je cherche une partie")
-                    from Online.Join_game import JoinGameUI
-                    join_game_ui = JoinGameUI()
-                    join_game_ui.run()
-
-                    ip_address = join_game_ui.get_input_ip()
-                    if ip_address:
-                        print(f" Connecting to server at {ip_address}:5000")
-                        from Online.Client import start_client
-                        start_client(ip_address, 5000)
-                    else:
-                        print("No IP entered, returning to main menu.")
+                    self.multiplayer_handler.join_game()
 
     def update(self):
         pass
