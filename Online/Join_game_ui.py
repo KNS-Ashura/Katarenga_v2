@@ -108,17 +108,17 @@ class JoinGameUI(BaseUI):
     
     def connect_to_server(self):
         if not self.ip_text.strip():
-            self.connection_status = "Erreur: Adresse IP vide"
+            self.connection_status = "Erreur: Adress Ip empty"
             self.connection_color = (255, 100, 100)
             return
         
         # CHeck if the IP format is valid
         if not self.is_valid_ip(self.ip_text):
-            self.connection_status = "Erreur: Format d'IP invalide"
+            self.connection_status = "Erreur: Ip invalide"
             self.connection_color = (255, 100, 100)
             return
         
-        self.connection_status = "Connexion en cours..."
+        self.connection_status = "Connexion in progress..."
         self.connection_color = (255, 255, 100)
         
         # Launch the connection in a separate thread

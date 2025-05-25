@@ -68,7 +68,7 @@ class HostGameUI(BaseUI):
         
     def run(self):
         if not self.server_started:
-            print("Erreur: Impossible de démarrer le serveur")
+            print("Erreur: Impossible to start the server.")
             return
             
         while self.running:
@@ -95,6 +95,11 @@ class HostGameUI(BaseUI):
             self.running = False
             return
         
+        # Check if at least one client is connected
+        server_status = self.server_manager.get_server_status()
+        if server_status['clients_count'] == 0:
+            return
+        
         # Clivk on game mode buttons
         for button in self.game_buttons:
             if button["rect"].collidepoint(position):
@@ -103,7 +108,7 @@ class HostGameUI(BaseUI):
     
     def start_game_mode(self, gamemode, mode_name):
         
-        print(f"Lancement du mode {mode_name} en tant qu'hôte")
+        print(f"Launching game {mode_name} you are the host...")
         
         # Create the board selection interface for the host
         # The server remains active in the background
@@ -112,7 +117,7 @@ class HostGameUI(BaseUI):
             square_selector = SquareSelectorUi(gamemode)
             square_selector.run()
         except Exception as e:
-            print(f"Erreur lors du lancement du mode de jeu: {e}")
+            print(f"Error when launching game: {e}")
     
     def update(self):
         pass
@@ -130,13 +135,24 @@ class HostGameUI(BaseUI):
         instruction_rect = instruction_surface.get_rect(center=(self.get_width() // 2, 150))
         screen.blit(instruction_surface, instruction_rect)
         
+        # Check if clients are connected for button state
+        server_status = self.server_manager.get_server_status()
+        clients_connected = server_status['clients_count'] > 0
+        
         # Buttons for game modes
         for button in self.game_buttons:
-            pygame.draw.rect(screen, button["color"], button["rect"], border_radius=12)
+            if clients_connected:
+                button_color = button["color"]
+                text_color = (255, 255, 255)
+            else:
+                button_color = (80, 80, 80)
+                text_color = (150, 150, 150)
+            
+            pygame.draw.rect(screen, button_color, button["rect"], border_radius=12)
             pygame.draw.rect(screen, (255, 255, 255), button["rect"], 2, border_radius=12)
             
            
-            text_surface = self.button_font.render(button["label"], True, (255, 255, 255))
+            text_surface = self.button_font.render(button["label"], True, text_color)
             text_rect = text_surface.get_rect(center=button["rect"].center)
             screen.blit(text_surface, text_rect)
         
@@ -155,14 +171,14 @@ class HostGameUI(BaseUI):
         server_status = self.server_manager.get_server_status()
         
         if server_status['running']:
-            status_text = "🟢 Serveur actif"
+            status_text = "Server running"
             status_surface = self.info_font.render(status_text, True, (100, 255, 100))
             status_rect = status_surface.get_rect()
             status_rect.centerx = self.get_width() // 2
             status_rect.y = self.server_info_y
             screen.blit(status_surface, status_rect)
             
-            # IP du serveur
+            # IP of server
             ip_text = f"IP: {server_status['ip']}:{server_status['port']}"
             ip_surface = self.info_font.render(ip_text, True, (255, 255, 255))
             ip_rect = ip_surface.get_rect()
@@ -171,14 +187,14 @@ class HostGameUI(BaseUI):
             screen.blit(ip_surface, ip_rect)
             
             if server_status['clients_count'] == 1:
-                clients_text = "1 client connecté"
+                clients_text = "1 client connected"
             else:
                 pass
             
             
-            # Message pour les joueurs
+            # Message for waiting players
             if server_status['clients_count'] == 0:
-                waiting_text = "En attente de joueurs..."
+                waiting_text = "Waiting for players to join..."
                 waiting_surface = self.info_font.render(waiting_text, True, (255, 255, 100))
             else:
                 waiting_text = "A player is waiting to join..."
