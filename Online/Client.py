@@ -1,6 +1,6 @@
 import socket
 import threading
-import time
+
 
 def connect_to_server(host, port):
     print(f"[CLIENT] Attempting to connect to {host}:{port}")

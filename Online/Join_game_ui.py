@@ -7,16 +7,16 @@ class JoinGameUI(BaseUI):
     def __init__(self, title="Join Game"):
         super().__init__(title)
         
-        # Configuration des éléments UI
+        
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
         self.input_font = pygame.font.SysFont(None, 32)
         
-        # Titre
+        
         self.title_surface = self.title_font.render("Join Game", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 100))
         
-        # Zone de saisie IP
+        # Text input for ip adress
         input_width = 400
         input_height = 50
         self.ip_input_rect = pygame.Rect(
@@ -26,18 +26,18 @@ class JoinGameUI(BaseUI):
             input_height
         )
         
-        # État de la zone de texte
-        self.ip_text = "127.0.0.1"  # IP par défaut
+        # Status of the UI
+        self.ip_text = "127.0.0.1"  # IP by default
         self.ip_active = False
         self.cursor_visible = True
         self.cursor_timer = 0
         
-        # Boutons
+        
         button_width = 200
         button_height = 60
         button_spacing = 40
         
-        # Bouton Connect
+        # Button connect
         self.connect_button_rect = pygame.Rect(
             (self.get_width() - button_width) // 2,
             self.ip_input_rect.bottom + 50,
@@ -45,12 +45,12 @@ class JoinGameUI(BaseUI):
             button_height
         )
         
-        # Bouton Back
+        # Button Back
         self.back_button_rect = pygame.Rect(
             20, 20, 120, 40
         )
         
-        # État de connexion
+        # Connexion status
         self.connection_status = ""
         self.connection_color = (255, 255, 255)
         
@@ -75,17 +75,17 @@ class JoinGameUI(BaseUI):
                     self.handle_text_input(event)
     
     def handle_click(self, position):
-        # Clic sur le bouton retour
+        # Click on the back button
         if self.back_button_rect.collidepoint(position):
             self.running = False
             return
         
-        # Clic sur le bouton connect
+        # Click on the connect button
         if self.connect_button_rect.collidepoint(position):
             self.connect_to_server()
             return
         
-        # Clic sur la zone de texte IP
+        # Click on the IP input area
         if self.ip_input_rect.collidepoint(position):
             self.ip_active = True
         else:
@@ -100,9 +100,9 @@ class JoinGameUI(BaseUI):
         elif event.key == pygame.K_TAB:
             self.ip_active = False
         else:
-            # Filtrer pour n'accepter que les caractères valides pour une IP
+            # Only ip address characters
             if event.unicode.isprintable() and len(self.ip_text) < 15:
-                # Accepter seulement les chiffres et les points
+                # Only allow digits and dots (chiffre et point)
                 if event.unicode.isdigit() or event.unicode == '.':
                     self.ip_text += event.unicode
     
@@ -112,7 +112,7 @@ class JoinGameUI(BaseUI):
             self.connection_color = (255, 100, 100)
             return
         
-        # Validation basique de l'IP
+        # CHeck if the IP format is valid
         if not self.is_valid_ip(self.ip_text):
             self.connection_status = "Erreur: Format d'IP invalide"
             self.connection_color = (255, 100, 100)
@@ -121,7 +121,7 @@ class JoinGameUI(BaseUI):
         self.connection_status = "Connexion en cours..."
         self.connection_color = (255, 255, 100)
         
-        # Lancer la connexion dans un thread séparé
+        # Launch the connection in a separate thread
         connection_thread = threading.Thread(
             target=self.attempt_connection, 
             args=(self.ip_text.strip(),), 
@@ -129,7 +129,7 @@ class JoinGameUI(BaseUI):
         )
         connection_thread.start()
     
-    def attempt_connection(self, ip_address):
+    def attempt_connection(self, ip_address):#La fonction est nécessaire si tu veux que la connexion réseau ne bloque pas l'UI
         try:
             # Utiliser la fonction start_client du module Client
             print(f"Tentative de connexion à {ip_address}:5000")
@@ -142,7 +142,7 @@ class JoinGameUI(BaseUI):
             self.connection_color = (255, 100, 100)
     
     def is_valid_ip(self, ip):
-        """Validation basique du format IP"""
+        
         try:
             parts = ip.split('.')
             if len(parts) != 4:
@@ -158,9 +158,9 @@ class JoinGameUI(BaseUI):
             return False
     
     def update(self):
-        # Gestion du clignotement du curseur
+        # Gestion of cursor
         self.cursor_timer += self.clock.get_time()
-        if self.cursor_timer >= 500:  # Clignotement toutes les 500ms
+        if self.cursor_timer >= 500:  
             self.cursor_visible = not self.cursor_visible
             self.cursor_timer = 0
     
@@ -168,30 +168,30 @@ class JoinGameUI(BaseUI):
         screen = self.get_screen()
         screen.fill((30, 30, 30))
         
-        # Titre
+        
         screen.blit(self.title_surface, self.title_rect)
         
-        # Label pour l'IP
+        
         ip_label = self.button_font.render("Adresse IP du serveur:", True, (255, 255, 255))
         ip_label_rect = ip_label.get_rect()
         ip_label_rect.centerx = self.get_width() // 2
         ip_label_rect.bottom = self.ip_input_rect.top - 10
         screen.blit(ip_label, ip_label_rect)
         
-        # Zone de saisie IP
+        
         input_color = (70, 70, 70) if not self.ip_active else (100, 100, 100)
         border_color = (255, 255, 255) if not self.ip_active else (100, 150, 255)
         
         pygame.draw.rect(screen, input_color, self.ip_input_rect)
         pygame.draw.rect(screen, border_color, self.ip_input_rect, 2)
         
-        # Texte dans la zone de saisie
+        
         text_surface = self.input_font.render(self.ip_text, True, (255, 255, 255))
         text_x = self.ip_input_rect.x + 10
         text_y = self.ip_input_rect.y + (self.ip_input_rect.height - text_surface.get_height()) // 2
         screen.blit(text_surface, (text_x, text_y))
         
-        # Curseur clignotant
+        
         if self.ip_active and self.cursor_visible:
             cursor_x = text_x + text_surface.get_width() + 2
             cursor_y = text_y
@@ -200,23 +200,25 @@ class JoinGameUI(BaseUI):
                            (cursor_x, cursor_y), 
                            (cursor_x, cursor_y + cursor_height), 2)
         
-        # Bouton Connect
+        
         connect_color = (70, 130, 180)
         pygame.draw.rect(screen, connect_color, self.connect_button_rect, border_radius=8)
         pygame.draw.rect(screen, (255, 255, 255), self.connect_button_rect, 2, border_radius=8)
         
+        
+        # Connect button text
         connect_text = self.button_font.render("Connect", True, (255, 255, 255))
         connect_text_rect = connect_text.get_rect(center=self.connect_button_rect.center)
         screen.blit(connect_text, connect_text_rect)
         
-        # Bouton Back
+        # Back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = self.button_font.render("Retour", True, (255, 255, 255))
         back_text_rect = back_text.get_rect(center=self.back_button_rect.center)
         screen.blit(back_text, back_text_rect)
         
-        # Statut de connexion
+        # Connexion status
         if self.connection_status:
             status_surface = self.button_font.render(self.connection_status, True, self.connection_color)
             status_rect = status_surface.get_rect()

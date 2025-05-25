@@ -3,15 +3,14 @@ import sys
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
-from Game_ui.move_rules import *
 from Online.Join_game_ui import JoinGameUI
+from Online.Host_game_ui import HostGameUI
 
 
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
         super().__init__(title)
-        
 
         btn_width = 300
         btn_height = 80
@@ -46,11 +45,15 @@ class MainMenuUI(BaseUI):
             "rect": pygame.Rect(side_x, side_y, side_btn_width, btn_height),
             "color": (100, 149, 237)
         })
+        
         self.buttons.append({
             "label": "Join a game",
             "rect": pygame.Rect(side_x, side_y + side_spacing, side_btn_width, btn_height),
             "color": (72, 209, 204)
         })
+
+        # Font pour les informations
+        self.info_font = pygame.font.SysFont(None, 24)
 
     def run(self):
         while self.running:
@@ -59,6 +62,7 @@ class MainMenuUI(BaseUI):
             self.draw()
             pygame.display.flip()
             self.clock.tick(60)
+        
         pygame.quit()
         sys.exit()
 
@@ -94,7 +98,8 @@ class MainMenuUI(BaseUI):
                 elif label == "Leave Game":
                     self.running = False
                 elif label == "Host a game":
-                    print("Host game functionality not implemented yet")
+                    host_ui = HostGameUI()
+                    host_ui.run()
                 elif label == "Join a game":
                     join_ui = JoinGameUI()
                     join_ui.run()
