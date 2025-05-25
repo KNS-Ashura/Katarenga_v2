@@ -4,13 +4,13 @@ from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Game_ui.move_rules import *
-from Online.multiplayer_handler import MultiplayerHandler
+
 
 
 class MainMenuUI(BaseUI):
     def __init__(self, title="Katarenga"):
         super().__init__(title)
-        self.multiplayer_handler = MultiplayerHandler()
+        
 
         btn_width = 300
         btn_height = 80
