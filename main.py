@@ -4,6 +4,7 @@ from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Game_ui.move_rules import *
+from Online.Join_game_ui import JoinGameUI
 
 
 
@@ -93,9 +94,10 @@ class MainMenuUI(BaseUI):
                 elif label == "Leave Game":
                     self.running = False
                 elif label == "Host a game":
-                    self.multiplayer_handler.host_game()
+                    print("Host game functionality not implemented yet")
                 elif label == "Join a game":
-                    self.multiplayer_handler.join_game()
+                    join_ui = JoinGameUI()
+                    join_ui.run()
 
     def update(self):
         pass
