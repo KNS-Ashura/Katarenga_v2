@@ -34,7 +34,7 @@ class Katarenga(BaseUI):
         self.current_player = 1  
         self.selected_pawn = None  
 
-        self.__ai = True
+        self.__ai = False
 
         self.info_font = pygame.font.SysFont(None, 36)
 
