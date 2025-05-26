@@ -13,7 +13,7 @@ class Isolation(BaseUI):
         self.board_ui = Board_draw_tools()
         
         self.cell_size = 60
-        self.grid_dim = 10
+        self.grid_dim = 8
         self.grid_size = self.cell_size * self.grid_dim
         
         self.top_offset = 80

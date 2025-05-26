@@ -75,6 +75,7 @@ class SquareEditorUi(BaseUI):
                 filename = "game_data.json"
                 self.board_obj.check_or_create_file(filename)
                 self.board_obj.save_to_file(filename)
+                self.running = False
             else:
                 print("Erreur : Toutes les cases doivent être non nulles (différentes de 0)")
 

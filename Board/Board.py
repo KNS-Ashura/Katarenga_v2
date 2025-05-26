@@ -67,8 +67,28 @@ class Board:
         self.__corners = [0 for _ in range(4)]
 
 
-    #saves the board in a json file
     def save_to_file(self, filename: str):
+        existing_data = {}
+
+        if os.path.exists(filename) and os.path.getsize(filename) > 0:
+            try:
+                with open(filename, "r") as f:
+                    existing_data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Le fichier '{filename}' existe mais n'est pas un JSON valide. Il sera remplacé.")
+                existing_data = {}
+
+        if "square" not in existing_data:
+            existing_data["square"] = {}
+
+        existing_data["square"].update(self.__square_list)
+
+        with open(filename, "w") as f:
+            json.dump(existing_data, f, indent=4)
+
+        print(f"Données sauvegardées (sans écrasement) dans '{filename}'.")
+        
+    def save_to_file_manager(self, filename: str):
         data_to_save = {
             "square": self.__square_list
         }

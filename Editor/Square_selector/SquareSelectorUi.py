@@ -141,7 +141,7 @@ class SquareSelectorUi(BaseUI):
                 congress = Congress(final_board)
                 congress.run()
             elif self.gamemode == 3:
-                isolation = Isolation(final_board)
+                isolation = Isolation(pre_final_board)
                 isolation.run()
         else:
             print("Le plateau n'est pas encore rempli.")

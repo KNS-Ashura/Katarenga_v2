@@ -1,6 +1,5 @@
 import pygame
 import copy
-import random
 import time
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
@@ -37,6 +36,22 @@ class Katarenga(BaseUI):
         self.__ai = True
 
         self.info_font = pygame.font.SysFont(None, 36)
+        
+        self.directions = {
+            1: [ # blue
+                (dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1] if not (dx == 0 and dy == 0)
+            ],
+            2: [  # green
+                (2, 1), (1, 2), (-1, 2), (-2, 1),
+                (-2, -1), (-1, -2), (1, -2), (2, -1)
+            ],
+            3: [  # yellow
+                (-1, -1), (-1, 1), (1, -1), (1, 1)
+            ],
+            4: [  # red
+                (-1, 0), (1, 0), (0, -1), (0, 1)
+            ]
+        }
 
     def run(self):
         while self.running:
@@ -268,31 +283,48 @@ class Katarenga(BaseUI):
         return 0
     
     def play_ai_turn(self):
-        possible_moves = []
+        from random import choice, shuffle
 
-        # Parcourt le plateau pour trouver tous les pions de l'IA (joueur 2)
-        for row in range(10):
-            for col in range(10):
-                cell_value = self.board[row][col]
-                if cell_value % 10 == 2:  # pion du joueur 2
-                    for dr in [-1, 0, 1]:
-                        for dc in [-1, 0, 1]:
-                            if dr == 0 and dc == 0:
-                                continue
-                            new_row = row + dr
-                            new_col = col + dc
-                            if 0 <= new_row < 10 and 0 <= new_col < 10:
-                                if self.is_valid_move(row, col, new_row, new_col):
-                                    possible_moves.append(((row, col), (new_row, new_col)))
+        if self.current_player != 2:
+            return
 
-        if possible_moves:
-            selected_move = random.choice(possible_moves)
-            (from_row, from_col), (to_row, to_col) = selected_move
-            self.make_move(from_row, from_col, to_row, to_col)
-            print(f"IA a joué de ({from_row}, {from_col}) à ({to_row}, {to_col})")
+        pawns = []
+        for x in range(10):
+            for y in range(10):
+                if self.board[x][y] % 10 == 2:
+                    pawns.append((x, y))
 
-            winner = self.check_victory()
-            if winner == 0:
-                self.switch_player()
-        else:
-            print("L'IA n'a pas trouvé de coup valide.")
+        shuffle(pawns)
+
+        for x, y in pawns:
+            couleur = self.board[x][y] // 10
+            dir_list = self.directions.get(couleur, [])
+            shuffle(dir_list)
+
+            for dx, dy in dir_list:
+                steps = 1
+                while True:
+                    new_x = x + dx * steps
+                    new_y = y + dy * steps
+
+                    if not (0 <= new_x < 10 and 0 <= new_y < 10):
+                        break
+
+                    if self.moves_rules.verify_move(self.board[x][y], x, y, new_x, new_y):
+                        self.make_move(x, y, new_x, new_y)
+                        print(f"IA a joué de ({x}, {y}) à ({new_x}, {new_y})")
+
+                        winner = self.check_victory()
+                        if winner == 0:
+                            self.switch_player()
+                        return
+
+                    if couleur in [1, 2]:
+                        break
+
+                    if self.board[new_x][new_y] != 0:
+                        break
+
+                    steps += 1
+
+        print("L'IA n'a pas trouvé de coup valide.")

@@ -45,8 +45,7 @@ class SquareManagerUi(BaseUI):
         
     def create_square_buttons(self):
         buttons = []
-        # Récupère la liste des clés (noms des carrés)
-        square_names = list(self.square_list.keys())[4:]  # On saute les 4 premiers
+        square_names = list(self.square_list.keys())[4:]
 
         total_width = len(square_names) * (self.button_width + self.button_padding) - self.button_padding
         start_x = (self.screen_w - total_width) // 2
@@ -112,18 +111,14 @@ class SquareManagerUi(BaseUI):
             
     def delete_square(self):
         if self.selected_square_name in self.square_list:
-            # Supprimer de self.square_list (qui est une référence à board_obj.get_square_list())
             del self.square_list[self.selected_square_name]
 
-            # Supprimer de board_obj directement, sans set_square_list
             square_list_obj = self.board_obj.get_square_list()
             if self.selected_square_name in square_list_obj:
                 del square_list_obj[self.selected_square_name]
 
-            # Sauvegarder le board_obj qui contient la liste à jour
-            self.board_obj.save_to_file("game_data.json")
+            self.board_obj.save_to_file_manager("game_data.json")
 
-            # Mettre à jour les boutons
             self.square_buttons = self.create_square_buttons()
 
             print(f"Carré '{self.selected_square_name}' supprimé.")
