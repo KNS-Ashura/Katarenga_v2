@@ -166,10 +166,6 @@ class Congress(BaseUI):
 
     def draw(self):
         screen = self.get_screen()
-
-        # 💡 Affiche le fond généré par BaseUI
-        screen.blit(self.get_background(), (0, 0))
-
         screen.blit(self.title_surface, self.title_rect)
 
         for row in range(self.grid_dim):
