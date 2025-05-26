@@ -1,5 +1,6 @@
 import pygame
 import copy
+import random
 from collections import deque
 
 from UI_tools.BaseUi import BaseUI
@@ -7,7 +8,7 @@ from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
 
 class Congress(BaseUI):
-    def __init__(self, board, title="Congress"):
+    def __init__(self,ai, board, title="Congress"):
         super().__init__(title)
 
         if board is None:
@@ -37,6 +38,8 @@ class Congress(BaseUI):
         self.current_player = 1
         self.selected_pawn  = None
         self.info_font = pygame.font.SysFont(None, 36)
+        
+        self.__ai = ai
 
     def place_pawn_congress(self, base_board):
         new_board = copy.deepcopy(base_board)
@@ -77,6 +80,9 @@ class Congress(BaseUI):
             self.draw()
             pygame.display.flip()
             self.clock.tick(60)
+            
+            if self.__ai and self.current_player == 2:
+                self.congress_ai()
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -213,3 +219,28 @@ class Congress(BaseUI):
         instr_rect = instr_surf.get_rect()
         instr_rect.topleft = (self.left_offset, rect.bottom + 10)
         screen.blit(instr_surf, instr_rect)
+        
+    def congress_ai(self):
+        positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
+                     if self.board[i][j] % 10 == self.current_player]
+
+        random.shuffle(positions)
+
+        directions = [(-1,0), (1,0), (0,-1), (0,1)]
+
+        for fr, fc in positions:
+            random.shuffle(directions)
+            for dx, dy in directions:
+                tr, tc = fr + dx, fc + dy
+                if 0 <= tr < self.grid_dim and 0 <= tc < self.grid_dim:
+                    if self.board[tr][tc] % 10 == 0:
+                        if self.is_valid_move(fr, fc, tr, tc):
+                            self.make_move(fr, fc, tr, tc)
+                            print(f"AI moved from ({fr},{fc}) to ({tr},{tc})")
+                            if self.check_victory(self.current_player):
+                                print(f"AI (Player {self.current_player}) wins!")
+                                self.running = False
+                            else:
+                                self.switch_player()
+                            return
+        print("AI has no valid moves.")
