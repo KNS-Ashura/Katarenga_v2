@@ -7,7 +7,7 @@ from Game_ui.move_rules import Moves_rules
 
 
 class Katarenga(BaseUI):
-    def __init__(self, board, title="Katarenga"):
+    def __init__(self,ai, board, title="Katarenga"):
         super().__init__(title)
         
         if board is None:
@@ -33,7 +33,7 @@ class Katarenga(BaseUI):
         self.current_player = 1  
         self.selected_pawn = None  
 
-        self.__ai = False
+        self.__ai = ai
 
         self.info_font = pygame.font.SysFont(None, 36)
         

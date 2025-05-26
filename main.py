@@ -33,7 +33,6 @@ class MainMenuUI(BaseUI):
             rect = pygame.Rect(x_center, start_y + i * (btn_height + spacing), btn_width, btn_height)
             self.buttons.append({"label": label, "rect": rect, "color": color})
 
-        # Boutons multijoueur à gauche, centrés verticalement
         side_x = 80
         side_btn_width = 200
         side_spacing = 120
