@@ -160,7 +160,10 @@ class Congress(BaseUI):
 
     def draw(self):
         screen = self.get_screen()
-        screen.fill((30, 30, 30))
+
+        # 💡 Affiche le fond généré par BaseUI
+        screen.blit(self.get_background(), (0, 0))
+
         screen.blit(self.title_surface, self.title_rect)
 
         for row in range(self.grid_dim):
@@ -191,10 +194,7 @@ class Congress(BaseUI):
     def draw_pawn(self, screen, rect, player):
         cx, cy = rect.center
         r = self.cell_size // 4
-        if player == 1:
-            color = (0, 0, 255)
-        else:
-            color = (255, 0, 0)
+        color = (0, 0, 255) if player == 1 else (255, 0, 0)
         pygame.draw.circle(screen, color, (cx, cy), r)
         pygame.draw.circle(screen, (255, 255, 255), (cx, cy), r, 2)
 
@@ -205,10 +205,7 @@ class Congress(BaseUI):
         rect = surf.get_rect()
         rect.topleft = (self.left_offset, self.top_offset + self.grid_size + 40)
         screen.blit(surf, rect)
-        if self.selected_pawn:
-            instr = "Click empty square to move pawn"
-        else:
-            instr = "Click your pawn to select"
+        instr = "Click empty square to move pawn" if self.selected_pawn else "Click your pawn to select"
         instr_surf = pygame.font.SysFont(None, 24).render(instr, True, (200, 200, 200))
         instr_rect = instr_surf.get_rect()
         instr_rect.topleft = (self.left_offset, rect.bottom + 10)
