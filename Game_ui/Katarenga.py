@@ -76,17 +76,14 @@ class Katarenga(BaseUI):
 
     def handle_board_click(self, pos):
         x, y = pos
-        
-        # Check if the click is within the grid area
         if (self.left_offset <= x < self.left_offset + self.grid_size and 
             self.top_offset <= y < self.top_offset + self.grid_size):
             
             col = (x - self.left_offset) // self.cell_size
             row = (y - self.top_offset) // self.cell_size
             
-            # Valid coord
-        if 0 <= row < self.grid_dim and 0 <= col < self.grid_dim:
-            self.process_move(row, col)
+            if 0 <= row < self.grid_dim and 0 <= col < self.grid_dim:
+                self.process_move(row, col)
 
     def place_pawn_katarenga(self, board):
         new_board = copy.deepcopy(board)
@@ -108,31 +105,37 @@ class Katarenga(BaseUI):
         player_on_cell = cell_value % 10
         
         if self.selected_pawn is None:
-            # Pawn selection
             if player_on_cell == self.current_player:
                 self.selected_pawn = (row, col)
                 print(f"Pion sélectionné à ({row}, {col})")
         else:
-            # Second click
             selected_row, selected_col = self.selected_pawn
             
             if (row, col) == self.selected_pawn:
-                # Click again = deselect
                 self.selected_pawn = None
                 print("Pion désélectionné")
             elif player_on_cell == self.current_player:
-                # Switch selection with same player
                 self.selected_pawn = (row, col)
                 print(f"Nouveau pion sélectionné à ({row}, {col})")
             else:
-                if self.is_valid_move(selected_row, selected_col, row, col):
+                if self.current_player == 1 and 1 <= selected_col <= 9 and selected_row == 1 and (row, col) in [(0, 0), (0, 9)]:
                     self.make_move(selected_row, selected_col, row, col)
                     self.selected_pawn = None
-                    
                     winner = self.check_victory()
                     if winner == 0:
                         self.switch_player()
-                        
+                elif self.current_player == 2 and 1 <= selected_col <= 9 and selected_row == 8 and (row, col) in [(9, 0), (9, 9)]:
+                    self.make_move(selected_row, selected_col, row, col)
+                    self.selected_pawn = None
+                    winner = self.check_victory()
+                    if winner == 0:
+                        self.switch_player()
+                elif self.is_valid_move(selected_row, selected_col, row, col):
+                    self.make_move(selected_row, selected_col, row, col)
+                    self.selected_pawn = None
+                    winner = self.check_victory()
+                    if winner == 0:
+                        self.switch_player()
                 else:
                     print("Mouvement invalide")
 
