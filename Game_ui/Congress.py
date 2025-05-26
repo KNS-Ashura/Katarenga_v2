@@ -8,7 +8,7 @@ from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
 
 class Congress(BaseUI):
-    def __init__(self,ai, board, title="Congress"):
+    def __init__(self, ai, board, title="Congress"):
         super().__init__(title)
 
         if board is None:
@@ -38,7 +38,7 @@ class Congress(BaseUI):
         self.current_player = 1
         self.selected_pawn  = None
         self.info_font = pygame.font.SysFont(None, 36)
-        
+
         self.__ai = ai
 
     def place_pawn_congress(self, base_board):
@@ -80,7 +80,7 @@ class Congress(BaseUI):
             self.draw()
             pygame.display.flip()
             self.clock.tick(60)
-            
+
             if self.__ai and self.current_player == 2:
                 self.congress_ai()
 
@@ -167,7 +167,7 @@ class Congress(BaseUI):
     def draw(self):
         screen = self.get_screen()
 
-        # 💡 Affiche le fond généré par BaseUI
+        # Use background from BaseUI (blue gradient)
         screen.blit(self.get_background(), (0, 0))
 
         screen.blit(self.title_surface, self.title_rect)
@@ -216,9 +216,7 @@ class Congress(BaseUI):
         instr_rect = instr_surf.get_rect()
         instr_rect.topleft = (self.left_offset, rect.bottom + 10)
         screen.blit(instr_surf, instr_rect)
-<<<<<<< HEAD
-=======
-        
+
     def congress_ai(self):
         positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
                      if self.board[i][j] % 10 == self.current_player]
@@ -243,4 +241,3 @@ class Congress(BaseUI):
                                 self.switch_player()
                             return
         print("AI has no valid moves.")
->>>>>>> 7c031064f1965119bda02b7d11665d481d2607e3

@@ -53,30 +53,6 @@ class MainMenuUI(BaseUI):
 
         self.info_font = pygame.font.SysFont(None, 24)
 
-        # Crée le fond bleu dégradé une fois
-        self.background_surface = self.create_blue_gradient_background()
-
-    def create_blue_gradient_background(self):
-        "Fond dégardé bleu"
-        width, height = self.get_width(), self.get_height()
-        surface = pygame.Surface((width, height))
-        center_x, center_y = width // 2, height // 2
-        max_dist = (center_x ** 2 + center_y ** 2) ** 0.5
-
-        for y in range(height):
-            for x in range(width):
-                dx, dy = x - center_x, y - center_y
-                dist = (dx ** 2 + dy ** 2) ** 0.5
-                ratio = dist / max_dist
-
-                r = int((1 - ratio) * 100 + ratio * 10)
-                g = int((1 - ratio) * 149 + ratio * 20)
-                b = int((1 - ratio) * 237 + ratio * 60)
-
-                surface.set_at((x, y), (r, g, b))
-
-        return surface
-
     def run(self):
         while self.running:
             self.handle_events()
@@ -121,7 +97,9 @@ class MainMenuUI(BaseUI):
         pass
 
     def draw(self):
-        self.get_screen().blit(self.background_surface, (0, 0))
+        # Utilisation du fond dégradé bleu défini dans BaseUI
+        self.get_screen().blit(self.get_background(), (0, 0))
+
         for button in self.buttons:
             pygame.draw.rect(self.get_screen(), button["color"], button["rect"], border_radius=12)
             self.draw_text(button["label"], button["rect"])
