@@ -1,6 +1,5 @@
 import pygame
 import copy
-import random
 from collections import deque
 
 from UI_tools.BaseUi import BaseUI
@@ -200,7 +199,10 @@ class Congress(BaseUI):
     def draw_pawn(self, screen, rect, player):
         cx, cy = rect.center
         r = self.cell_size // 4
-        color = (0, 0, 255) if player == 1 else (255, 0, 0)
+        if player == 1:
+            color = (0, 0, 255)
+        else:
+            color = (255, 0, 0)
         pygame.draw.circle(screen, color, (cx, cy), r)
         pygame.draw.circle(screen, (255, 255, 255), (cx, cy), r, 2)
 
@@ -211,12 +213,17 @@ class Congress(BaseUI):
         rect = surf.get_rect()
         rect.topleft = (self.left_offset, self.top_offset + self.grid_size + 40)
         screen.blit(surf, rect)
-        instr = "Click empty square to move pawn" if self.selected_pawn else "Click your pawn to select"
+        if self.selected_pawn:
+            instr = "Click empty square to move pawn"
+        else:
+            instr = "Click your pawn to select"
         instr_surf = pygame.font.SysFont(None, 24).render(instr, True, (200, 200, 200))
         instr_rect = instr_surf.get_rect()
         instr_rect.topleft = (self.left_offset, rect.bottom + 10)
         screen.blit(instr_surf, instr_rect)
-
+<<<<<<< HEAD
+=======
+        
     def congress_ai(self):
         positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
                      if self.board[i][j] % 10 == self.current_player]
