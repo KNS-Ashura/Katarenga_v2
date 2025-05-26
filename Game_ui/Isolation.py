@@ -6,7 +6,7 @@ import random
 import time
 
 class Isolation(BaseUI):
-    def __init__(self, board, title="Isolation"):
+    def __init__(self,ai, board, title="Isolation"):
         super().__init__(title)
         self.board = board
         self.rules = Moves_rules(board)
@@ -29,7 +29,7 @@ class Isolation(BaseUI):
         self.total_moves = 0
         self.max_moves = self.grid_dim * self.grid_dim
 
-        self.__AI = True
+        self.__AI = ai
 
     def run(self):
         self.running = True

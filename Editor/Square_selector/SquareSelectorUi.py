@@ -41,6 +41,9 @@ class SquareSelectorUi(BaseUI):
         self.holding_square = False 
         self.held_square_data = None
         
+        self.__ai = False
+        self.checkbox_rect = pygame.Rect(20, 220, 20, 20)
+        
     def is_board_filled(self):
         for row in self.board:
             for cell in row:
@@ -126,7 +129,11 @@ class SquareSelectorUi(BaseUI):
                 self.holding_square = True
                 print(f"Square accroché : {self.selected_square}")
                 return
-
+            
+        if self.checkbox_rect.collidepoint(x, y):
+            self.__ai = not self.__ai
+            return
+            
         if self.is_board_filled():
             print("Lancement de la partie")
             
@@ -135,18 +142,19 @@ class SquareSelectorUi(BaseUI):
             final_board = self.board_obj.add_border_and_corners(pre_final_board)
             
             if self.gamemode == 1:
-                katarenga = Katarenga(final_board)
+                katarenga = Katarenga(self.__ai,final_board)
                 katarenga.run()
             elif self.gamemode == 2:
-                congress = Congress(final_board)
+                congress = Congress(self.__ai,final_board)
                 congress.run()
             elif self.gamemode == 3:
-                isolation = Isolation(pre_final_board)
+                isolation = Isolation(self.__ai,pre_final_board)
                 isolation.run()
         else:
             print("Le plateau n'est pas encore rempli.")
-
-        return
+            return
+    
+        
 
 
     def is_on_board(self, x, y):
@@ -211,6 +219,15 @@ class SquareSelectorUi(BaseUI):
 
         start_text = self.button_font.render("Lancer la partie", True, (255, 255, 255))
         screen.blit(start_text, start_text.get_rect(center=self.start_button_rect.center))
+        
+        pygame.draw.rect(screen, (255, 255, 255), self.checkbox_rect, 2)
+        
+        if self.__ai:
+            pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topleft, self.checkbox_rect.bottomright, 2)
+            pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topright, self.checkbox_rect.bottomleft, 2)
+
+        label = self.button_font.render("Activate AI", True, (255, 255, 255))
+        screen.blit(label, (self.checkbox_rect.right + 10, self.checkbox_rect.top - 2))
 
         for name, rect in self.square_buttons:
             pygame.draw.rect(screen, (70, 70, 70), rect)
