@@ -1,11 +1,11 @@
-# main_updated.py - Exemple d'intégration du module Online
+
 import pygame
 import sys
 from Editor.EditorMenu import EditorMenu
 from UI_tools.BaseUi import BaseUI
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 
-# Import des nouvelles interfaces réseau
+
 from Online.HostUI import HostUI
 from Online.JoinUI import JoinUI
 
@@ -119,42 +119,14 @@ class MainMenuUI(BaseUI):
     def draw(self):
         # Utilisation du fond dégradé bleu défini dans BaseUI
         self.get_screen().blit(self.get_background(), (0, 0))
-
-        # Titre principal
-        title_surface = pygame.font.SysFont(None, 72).render("KATARENGA", True, (255, 255, 255))
-        title_rect = title_surface.get_rect(center=(self.get_width() // 2, 100))
-        self.get_screen().blit(title_surface, title_rect)
-
-        # Sous-titre pour différencier les modes
-        subtitle_local = pygame.font.SysFont(None, 36).render("Mode Local", True, (200, 200, 200))
-        subtitle_network = pygame.font.SysFont(None, 36).render("Mode Réseau", True, (200, 200, 200))
         
-        # Position des sous-titres
-        local_rect = subtitle_local.get_rect(center=(self.get_width() // 2, 180))
-        network_rect = subtitle_network.get_rect(center=(180, 180))
-        
-        self.get_screen().blit(subtitle_local, local_rect)
-        self.get_screen().blit(subtitle_network, network_rect)
 
-        # Dessiner tous les boutons
+        # Draw buttons
         for button in self.buttons:
             pygame.draw.rect(self.get_screen(), button["color"], button["rect"], border_radius=12)
             self.draw_text(button["label"], button["rect"])
 
-        # Instructions réseau
-        network_instructions = [
-            "Host: Démarre un serveur pour que",
-            "d'autres puissent se connecter",
-            "",
-            "Join: Se connecte au serveur",
-            "d'un autre joueur"
-        ]
         
-        start_y = network_rect.bottom + 200
-        for i, instruction in enumerate(network_instructions):
-            if instruction:  #
-                inst_surface = pygame.font.SysFont(None, 20).render(instruction, True, (150, 150, 150))
-                self.get_screen().blit(inst_surface, (20, start_y + i * 20))
 
     def draw_text(self, text, rect):
         txt_surface = self.font.render(text, True, (255, 255, 255))
