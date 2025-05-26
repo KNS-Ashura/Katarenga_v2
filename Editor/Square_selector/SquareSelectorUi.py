@@ -256,6 +256,16 @@ class SquareSelectorUi(BaseUI):
                     color = self.board_ui.get_color_from_board(value // 10)
                     pygame.draw.rect(screen, color, rect)
                     pygame.draw.rect(screen, (255, 255, 255), rect, 1)
+                    
+        instructions = [
+            "L : rotate left",
+            "R : rotate right",
+            "F : flip side"
+        ]
+
+        for i, text in enumerate(instructions):
+            instruction_surface = self.button_font.render(text, True, (255, 255, 255))
+            screen.blit(instruction_surface, (20, 100 + i * 30))
 
 if __name__ == "__main__":
     app = SquareSelectorUi()
