@@ -2,6 +2,8 @@ import pygame
 import copy
 from collections import deque
 
+import random
+
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
@@ -221,8 +223,6 @@ class Congress(BaseUI):
         instr_rect = instr_surf.get_rect()
         instr_rect.topleft = (self.left_offset, rect.bottom + 10)
         screen.blit(instr_surf, instr_rect)
-<<<<<<< HEAD
-=======
         
     def congress_ai(self):
         positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
