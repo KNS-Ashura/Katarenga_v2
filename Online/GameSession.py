@@ -2,6 +2,7 @@
 import json
 import copy
 from Game_ui.move_rules import Moves_rules
+from Online.NetworkGameLogic import NetworkGameLogic
 
 class GameSession:
     
@@ -14,8 +15,11 @@ class GameSession:
         self.game_started = False
         self.game_finished = False
         
-        # Ajout pour les règles de mouvement
+        # Movement rules
         self.moves_rules = None
+        
+        # Game logic handler
+        self.game_logic = NetworkGameLogic()
         
         # Callbacks for game events
         self.on_board_update = None
@@ -34,11 +38,11 @@ class GameSession:
     
     def set_board(self, board_data):
         self.board = copy.deepcopy(board_data)
-        # Initialiser les règles de mouvement avec le nouveau plateau
+        # Initialize movement rules with new board
         self.moves_rules = Moves_rules(self.board)
         
         if self.is_host:
-            # send the board data to the client
+            # Send board data to client
             message = {
                 'type': 'BOARD_DATA',
                 'board': self.board,
@@ -52,7 +56,7 @@ class GameSession:
             return False
         
         self.game_started = True
-        self.current_player = 1  # Le host start all time
+        self.current_player = 1  # Host always starts
         
         if self.is_host:
             message = {
@@ -64,24 +68,27 @@ class GameSession:
         if self.on_player_change:
             self.on_player_change(self.current_player)
         
-        print(f"[GAME] Game launch - Type: {self.game_type}")
+        print(f"[GAME] Game started - Type: {self.game_type}")
         return True
     
     def make_move(self, from_pos, to_pos):
         if not self.game_started or self.game_finished:
             return False
         
-        #check if it's the player's turn
+        # Check if it's the player's turn
         local_player = 1 if self.is_host else 2
         if self.current_player != local_player:
-            print("[GAME] Ce n'est pas votre tour")
+            print("[GAME] It's not your turn")
             return False
         
-        # Valide et applique le mouvement selon le type de jeu
-        if self._validate_move(from_pos, to_pos):
+        # Validate and apply move using game logic
+        if self.game_logic.validate_move(
+            self.board, self.moves_rules, self.game_type, 
+            self.current_player, from_pos, to_pos
+        ):
             self._apply_move(from_pos, to_pos)
             
-            # send the move to the opponent
+            # Send move to opponent
             message = {
                 'type': 'MOVE',
                 'from': from_pos,
@@ -92,7 +99,9 @@ class GameSession:
             
             self._switch_player()
             
-            winner = self._check_victory()
+            winner = self.game_logic.check_victory(
+                self.board, self.game_type, self.current_player
+            )
             if winner:
                 self._end_game(winner)
             
@@ -108,92 +117,52 @@ class GameSession:
             if msg_type == 'BOARD_DATA':
                 self.board = data['board']
                 self.game_type = data['game_type']
-                # Initialiser les règles avec le plateau reçu
+                # Initialize rules with received board
                 self.moves_rules = Moves_rules(self.board)
                 if self.on_board_update:
                     self.on_board_update(self.board)
-                print("[GAME] Plateau reçu")
+                print("[GAME] Board received")
             
             elif msg_type == 'GAME_START':
                 self.game_started = True
                 self.current_player = data['current_player']
                 if self.on_player_change:
                     self.on_player_change(self.current_player)
-                print("[GAME] Game launch by host")
+                print("[GAME] Game started by host")
             
             elif msg_type == 'MOVE':
                 from_pos = tuple(data['from']) if data['from'] else None
                 to_pos = tuple(data['to'])
                 player = data['player']
                 
-                # Apply move of opponent
+                # Apply opponent's move
                 self._apply_move(from_pos, to_pos)
                 self._switch_player()
                 
-                winner = self._check_victory()
+                winner = self.game_logic.check_victory(
+                    self.board, self.game_type, self.current_player
+                )
                 if winner:
                     self._end_game(winner)
                 
-                print(f"[GAME] Move receive: {from_pos} -> {to_pos}")
+                print(f"[GAME] Move received: {from_pos} -> {to_pos}")
             
             elif msg_type == 'GAME_END':
                 winner = data['winner']
                 self._end_game(winner)
-                print(f"[GAME] VICTORY ! CONGRATULATIONS: {winner}")
+                print(f"[GAME] VICTORY! Winner: {winner}")
             
             elif msg_type == 'CHAT':
                 message_text = data['message']
                 print(f"[CHAT] {message_text}")
         
         except Exception as e:
-            print(f"[ERROR] Error with text treatment: {e}")
+            print(f"[ERROR] Error processing message: {e}")
     
     def _handle_disconnect(self):
         print("[GAME] Opponent disconnected")
         if not self.game_finished:
-            self._end_game("Déconnexion")
-    
-    def _validate_move(self, from_pos, to_pos):
-        """Valide le mouvement selon le type de jeu en utilisant les règles existantes"""
-        if not self.moves_rules or not self.board:
-            return False
-        
-        to_row, to_col = to_pos
-        
-        # Vérifier que la destination est dans les limites
-        if not (0 <= to_row < len(self.board) and 0 <= to_col < len(self.board[0])):
-            return False
-        
-        if self.game_type == 3:  # Isolation
-            # Pour Isolation, from_pos peut être None
-            if from_pos is not None:
-                return False  # En isolation, on ne déplace pas, on place
-            
-            # Vérifier que la case est libre
-            case = self.board[to_row][to_col]
-            if case % 10 != 0:
-                return False
-            
-            # Vérifier que la case n'est pas en prise (à implémenter plus tard)
-            return True
-        
-        else:  # Katarenga et Congress
-            if from_pos is None:
-                return False
-            
-            from_row, from_col = from_pos
-            
-            # Vérifier que la position de départ est dans les limites
-            if not (0 <= from_row < len(self.board) and 0 <= from_col < len(self.board[0])):
-                return False
-            
-            # Vérifier que le joueur possède bien le pion à la position de départ
-            case_color = self.board[from_row][from_col]
-            if case_color % 10 != self.current_player:
-                return False
-            
-            # Utiliser les règles existantes pour valider le mouvement
-            return self.moves_rules.verify_move(case_color, from_row, from_col, to_row, to_col)
+            self._end_game("Disconnection")
     
     def _apply_move(self, from_pos, to_pos):
         if not self.board:
@@ -202,25 +171,29 @@ class GameSession:
         to_row, to_col = to_pos
         
         if self.game_type == 3:  # Isolation
-            # Pour Isolation, on place juste le pion
+            # For Isolation, just place the piece
             dest_color = self.board[to_row][to_col] // 10
             self.board[to_row][to_col] = dest_color * 10 + self.current_player
         
-        else:  # Katarenga et Congress
+        else:  # Katarenga and Congress
             if from_pos is None:
                 return
             
             from_row, from_col = from_pos
             
-            # Moove pawn from the board
+            # Move piece from source to destination
             piece = self.board[from_row][from_col]
             
-            # Clean case
+            # Clear source square
             self.board[from_row][from_col] = (piece // 10) * 10
             
-            # Place the pawn to the new position
+            # Place piece at destination
             dest_color = self.board[to_row][to_col] // 10
             self.board[to_row][to_col] = dest_color * 10 + self.current_player
+        
+        # Update move rules with new board state
+        if self.moves_rules:
+            self.moves_rules._Moves_rules__board = self.board
         
         if self.on_board_update:
             self.on_board_update(self.board)
@@ -230,16 +203,10 @@ class GameSession:
         if self.on_player_change:
             self.on_player_change(self.current_player)
     
-    def _check_victory(self):
-        """Détection de victoire basique - à améliorer plus tard"""
-        # Pour l'instant, on retourne None (pas de gagnant)
-        # TODO: Implémenter la détection de victoire pour chaque jeu
-        return None
-    
     def _end_game(self, winner):
         self.game_finished = True
         
-        if self.is_host and winner != "Déconnexion":
+        if self.is_host and winner != "Disconnection":
             message = {
                 'type': 'GAME_END',
                 'winner': winner
@@ -265,3 +232,19 @@ class GameSession:
             'is_host': self.is_host,
             'local_player': 1 if self.is_host else 2
         }
+    
+    def get_game_info(self):
+        """Get detailed game state information"""
+        if self.board and self.game_logic:
+            return self.game_logic.get_game_state_info(
+                self.board, self.game_type, self.current_player
+            )
+        return None
+    
+    def get_valid_moves(self):
+        """Get all valid moves for current player"""
+        if self.board and self.game_logic:
+            return self.game_logic.get_valid_moves(
+                self.board, self.moves_rules, self.game_type, self.current_player
+            )
+        return []

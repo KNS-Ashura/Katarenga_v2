@@ -8,7 +8,7 @@ from Online.NetworkGameAdapter import NetworkGameAdapter
 
 class JoinUI(BaseUI):
     
-    def __init__(self, title="Join a game"):
+    def __init__(self, title="Rejoindre une partie"):
         super().__init__(title)
         
         self.network = NetworkManager()
@@ -35,7 +35,7 @@ class JoinUI(BaseUI):
         self.setup_ui()
     
     def setup_ui(self):
-        self.title_surface = self.title_font.render("Join a game", True, (255, 255, 255))
+        self.title_surface = self.title_font.render("Rejoindre une partie", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 80))
         
         self.back_button = pygame.Rect(20, 20, 120, 40)
@@ -118,7 +118,7 @@ class JoinUI(BaseUI):
             # Connexion SUCCESS
             self.connected = True
             self.connecting = False
-            self.set_status("Connected ! Waiting for board...", (100, 255, 100))
+            self.set_status("Connecté! En attente du plateau...", (100, 255, 100))
             
             self.network.set_callbacks(
                 message_callback=self.handle_network_message,
@@ -143,35 +143,36 @@ class JoinUI(BaseUI):
                 self.board_received = True
                 self.session = GameSession(data['game_type'], self.network)
                 self.session.set_board(data['board'])
-                self.set_status("Board ready", (100, 255, 100))
+                self.set_status("Plateau reçu! Prêt à jouer", (100, 255, 100))
             
             elif data.get('type') == 'GAME_START':
                 self.game_started = True
-                self.set_status("Game start !", (100, 255, 100))
-                # Auto-lancer le jeu quand l'hôte démarre
+                self.set_status("Partie démarrée!", (100, 255, 100))
+                # Auto-launch game when host starts
                 if self.board_received:
                     self.launch_network_game()
 
         except:
             if "READY" in message.upper():
-                self.set_status("Server ready", (100, 255, 100))
+                self.set_status("Serveur prêt", (100, 255, 100))
     
     def handle_server_disconnect(self):
         self.connected = False
         self.connecting = False
         self.board_received = False
         self.game_started = False
-        self.set_status("Server disconnected", (255, 100, 100))
+        self.set_status("Serveur déconnecté", (255, 100, 100))
     
     def launch_network_game(self):
+        """Launch network game with NetworkGameAdapter"""
         print("[CLIENT] Launching network game...")
         
         if self.session and self.board_received:
-            # Créer et lancer l'adaptateur de jeu réseau
+            # Create and launch network game adapter
             network_game = NetworkGameAdapter(self.session)
             network_game.run()
             
-            # Fermer l'interface de connexion une fois le jeu terminé
+            # Close join interface once game is finished
             self.running = False
     
     def set_status(self, message, color):
@@ -204,7 +205,7 @@ class JoinUI(BaseUI):
     
     def draw_connection_interface(self, screen):
         # Label for IP input
-        label = self.button_font.render("Adress IP of server:", True, (255, 255, 255))
+        label = self.button_font.render("Adresse IP of server:", True, (255, 255, 255))
         label_rect = label.get_rect(centerx=self.get_width() // 2, y=self.ip_input_rect.y - 40)
         screen.blit(label, label_rect)
         
@@ -233,7 +234,7 @@ class JoinUI(BaseUI):
         pygame.draw.rect(screen, button_color, self.connect_button)
         pygame.draw.rect(screen, (255, 255, 255), self.connect_button, 2)
         
-        button_text = "Connexion..." if self.connecting else "Connect"
+        button_text = "Connexion..." if self.connecting else "Se connecter"
         connect_surface = self.button_font.render(button_text, True, (255, 255, 255))
         screen.blit(connect_surface, connect_surface.get_rect(center=self.connect_button.center))
         
@@ -276,10 +277,10 @@ class JoinUI(BaseUI):
         if self.board_received and not self.game_started:
             pygame.draw.rect(screen, (100, 255, 100), self.start_game_button)
             pygame.draw.rect(screen, (255, 255, 255), self.start_game_button, 2)
-            start_text = self.button_font.render("Join the game", True, (255, 255, 255))
+            start_text = self.button_font.render("Rejoindre la partie", True, (255, 255, 255))
             screen.blit(start_text, start_text.get_rect(center=self.start_game_button.center))
             
-            instruction = "Board ready ! Click to start the game."
+            instruction = "Plateau reçu - Cliquez pour rejoindre"
         elif self.game_started:
             instruction = "Game in progress !"
         else:

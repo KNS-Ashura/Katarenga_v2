@@ -4,11 +4,11 @@ from Online.NetworkManager import NetworkManager
 from Online.GameSession import GameSession
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Online.NetworkGameAdapter import NetworkGameAdapter
-import copy
+
 
 class HostUI(BaseUI):
 
-    def __init__(self, title="Host Game"):
+    def __init__(self, title="Héberger une partie"):
         super().__init__(title)
         
         self.network = NetworkManager()
@@ -27,7 +27,7 @@ class HostUI(BaseUI):
         self.setup_ui()
     
     def setup_ui(self):
-        self.title_surface = self.title_font.render("Host game", True, (255, 255, 255))
+        self.title_surface = self.title_font.render("Héberger une partie", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 80))
         
         self.back_button = pygame.Rect(20, 20, 120, 40)
@@ -135,48 +135,51 @@ class HostUI(BaseUI):
     def launch_board_selection(self):
         print(f"[HOST] Launching board selection for game type {self.selected_game}")
         
-        # Créer la session de jeu
+        # Create game session
         self.session = GameSession(self.selected_game, self.network)
         
-        # Lancer la sélection de plateau
+        # Launch board selection
         selector = SquareSelectorUi(self.selected_game)
         selector.run()
         
-        # Récupérer le plateau créé
+        # Get the created board
         if hasattr(selector, 'board') and selector.is_board_filled():
             self.board_selected = True
             
-            # Préparer le plateau selon le type de jeu
+            # Prepare board according to game type
             if self.selected_game == 1:  # Katarenga
                 pre_final_board = selector.board_obj.create_final_board(selector.board)
                 final_board = selector.board_obj.add_border_and_corners(pre_final_board)
-                # Placer les pions pour Katarenga
+                # Place pawns for Katarenga
                 final_board = self._place_pawns_katarenga(final_board)
             elif self.selected_game == 2:  # Congress
                 pre_final_board = selector.board_obj.create_final_board(selector.board)
                 final_board = selector.board_obj.add_border_and_corners(pre_final_board)
-                # Placer les pions pour Congress
+                # Place pawns for Congress
                 final_board = self._place_pawns_congress(final_board)
             elif self.selected_game == 3:  # Isolation
                 final_board = selector.board_obj.create_final_board(selector.board)
-                # Pas de placement de pions pour Isolation
+                # No pawn placement for Isolation
             
-            # Envoyer le plateau au client
+            # Send board to client
             self.session.set_board(final_board)
             
-            # Lancer le jeu réseau
+            # Launch network game
             self.launch_network_game()
+        else:
+            print("[HOST] Board selection was cancelled or incomplete")
+            self.board_selected = False
     
     def launch_network_game(self):
-        """Lance le jeu en réseau avec NetworkGameAdapter"""
+        """Launch network game with NetworkGameAdapter"""
         print("[HOST] Launching network game...")
         
         if self.session and self.board_selected:
-            # Créer et lancer l'adaptateur de jeu réseau
+            # Create and launch network game adapter
             network_game = NetworkGameAdapter(self.session)
             network_game.run()
             
-            # Fermer l'interface d'hôte une fois le jeu terminé
+            # Close host interface once game is finished
             self.running = False
     
     def _place_pawns_katarenga(self, board):
@@ -197,7 +200,8 @@ class HostUI(BaseUI):
         return new_board
     
     def _place_pawns_congress(self, board):
-        
+        """Place les pions pour Congress (même logique que dans Congress.py)"""
+        import copy
         new_board = copy.deepcopy(board)
         grid_dim = len(new_board)
         
@@ -272,14 +276,14 @@ class HostUI(BaseUI):
         pygame.draw.rect(screen, button_color, self.start_server_button)
         pygame.draw.rect(screen, (255, 255, 255), self.start_server_button, 2)
         
-        start_text = self.button_font.render("Start", True, (255, 255, 255))
+        start_text = self.button_font.render("Démarrer le serveur", True, (255, 255, 255))
         screen.blit(start_text, start_text.get_rect(center=self.start_server_button.center))
         
         # Instructions
         if not self.selected_game:
-            instruction = "Select a game to host and after click on 'Start'"
+            instruction = "Sélectionnez un jeu puis démarrez le serveur"
         else:
-            instruction = f"Game select: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}"
+            instruction = f"Jeu sélectionné: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}"
         
         inst_surface = self.info_font.render(instruction, True, (200, 200, 200))
         screen.blit(inst_surface, (50, self.info_y))
@@ -300,10 +304,10 @@ class HostUI(BaseUI):
             info_texts.append("Player connected - Ready to select board")
             status_color = (100, 255, 100)
             
-            # Afficher le bouton de sélection de plateau
+            # Display board selection button
             pygame.draw.rect(screen, (100, 255, 100), self.select_board_button)
             pygame.draw.rect(screen, (255, 255, 255), self.select_board_button, 2)
-            board_text = self.button_font.render("Sélectionner le plateau", True, (255, 255, 255))
+            board_text = self.button_font.render("Select Board", True, (255, 255, 255))
             screen.blit(board_text, board_text.get_rect(center=self.select_board_button.center))
             
         elif self.board_selected:
