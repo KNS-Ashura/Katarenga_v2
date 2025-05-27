@@ -108,6 +108,7 @@ class MainMenuUI(BaseUI):
                 
                 elif label == "Join a game":
                     try:
+                     
                         join_interface = JoinUI()
                         join_interface.run()
                     except Exception as e:

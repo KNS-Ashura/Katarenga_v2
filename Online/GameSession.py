@@ -1,6 +1,7 @@
 # Online/GameSession.py
 import json
 import copy
+from Game_ui.move_rules import Moves_rules
 
 class GameSession:
     
@@ -12,6 +13,9 @@ class GameSession:
         self.is_host = network_manager.is_host
         self.game_started = False
         self.game_finished = False
+        
+        # Ajout pour les règles de mouvement
+        self.moves_rules = None
         
         # Callbacks for game events
         self.on_board_update = None
@@ -30,6 +34,8 @@ class GameSession:
     
     def set_board(self, board_data):
         self.board = copy.deepcopy(board_data)
+        # Initialiser les règles de mouvement avec le nouveau plateau
+        self.moves_rules = Moves_rules(self.board)
         
         if self.is_host:
             # send the board data to the client
@@ -71,7 +77,7 @@ class GameSession:
             print("[GAME] Ce n'est pas votre tour")
             return False
         
-        # Valide et applique le mouvement (à implémenter selon le jeu)
+        # Valide et applique le mouvement selon le type de jeu
         if self._validate_move(from_pos, to_pos):
             self._apply_move(from_pos, to_pos)
             
@@ -83,7 +89,6 @@ class GameSession:
                 'player': self.current_player
             }
             self.network.send_message(json.dumps(message))
-            
             
             self._switch_player()
             
@@ -103,6 +108,8 @@ class GameSession:
             if msg_type == 'BOARD_DATA':
                 self.board = data['board']
                 self.game_type = data['game_type']
+                # Initialiser les règles avec le plateau reçu
+                self.moves_rules = Moves_rules(self.board)
                 if self.on_board_update:
                     self.on_board_update(self.board)
                 print("[GAME] Plateau reçu")
@@ -115,7 +122,7 @@ class GameSession:
                 print("[GAME] Game launch by host")
             
             elif msg_type == 'MOVE':
-                from_pos = tuple(data['from'])
+                from_pos = tuple(data['from']) if data['from'] else None
                 to_pos = tuple(data['to'])
                 player = data['player']
                 
@@ -123,7 +130,6 @@ class GameSession:
                 self._apply_move(from_pos, to_pos)
                 self._switch_player()
                 
-               
                 winner = self._check_victory()
                 if winner:
                     self._end_game(winner)
@@ -148,41 +154,86 @@ class GameSession:
             self._end_game("Déconnexion")
     
     def _validate_move(self, from_pos, to_pos):
+        """Valide le mouvement selon le type de jeu en utilisant les règles existantes"""
+        if not self.moves_rules or not self.board:
+            return False
         
-        # À implémenter selon le type de jeu
-        # Pour l'instant, on retourne toujours True
-        return True
+        to_row, to_col = to_pos
+        
+        # Vérifier que la destination est dans les limites
+        if not (0 <= to_row < len(self.board) and 0 <= to_col < len(self.board[0])):
+            return False
+        
+        if self.game_type == 3:  # Isolation
+            # Pour Isolation, from_pos peut être None
+            if from_pos is not None:
+                return False  # En isolation, on ne déplace pas, on place
+            
+            # Vérifier que la case est libre
+            case = self.board[to_row][to_col]
+            if case % 10 != 0:
+                return False
+            
+            # Vérifier que la case n'est pas en prise (à implémenter plus tard)
+            return True
+        
+        else:  # Katarenga et Congress
+            if from_pos is None:
+                return False
+            
+            from_row, from_col = from_pos
+            
+            # Vérifier que la position de départ est dans les limites
+            if not (0 <= from_row < len(self.board) and 0 <= from_col < len(self.board[0])):
+                return False
+            
+            # Vérifier que le joueur possède bien le pion à la position de départ
+            case_color = self.board[from_row][from_col]
+            if case_color % 10 != self.current_player:
+                return False
+            
+            # Utiliser les règles existantes pour valider le mouvement
+            return self.moves_rules.verify_move(case_color, from_row, from_col, to_row, to_col)
     
     def _apply_move(self, from_pos, to_pos):
-        
         if not self.board:
             return
         
-        from_row, from_col = from_pos
         to_row, to_col = to_pos
         
-        # Moove pawn from the board
-        piece = self.board[from_row][from_col]
+        if self.game_type == 3:  # Isolation
+            # Pour Isolation, on place juste le pion
+            dest_color = self.board[to_row][to_col] // 10
+            self.board[to_row][to_col] = dest_color * 10 + self.current_player
         
-        # Clean case
-        self.board[from_row][from_col] = (piece // 10) * 10
-        
-        # Place the pawn to the new position
-        dest_color = self.board[to_row][to_col] // 10
-        self.board[to_row][to_col] = dest_color * 10 + self.current_player
+        else:  # Katarenga et Congress
+            if from_pos is None:
+                return
+            
+            from_row, from_col = from_pos
+            
+            # Moove pawn from the board
+            piece = self.board[from_row][from_col]
+            
+            # Clean case
+            self.board[from_row][from_col] = (piece // 10) * 10
+            
+            # Place the pawn to the new position
+            dest_color = self.board[to_row][to_col] // 10
+            self.board[to_row][to_col] = dest_color * 10 + self.current_player
         
         if self.on_board_update:
             self.on_board_update(self.board)
     
     def _switch_player(self):
-        
         self.current_player = 2 if self.current_player == 1 else 1
         if self.on_player_change:
             self.on_player_change(self.current_player)
     
     def _check_victory(self):
-        # À implémenter selon le type de jeu
+        """Détection de victoire basique - à améliorer plus tard"""
         # Pour l'instant, on retourne None (pas de gagnant)
+        # TODO: Implémenter la détection de victoire pour chaque jeu
         return None
     
     def _end_game(self, winner):
