@@ -122,6 +122,22 @@ class GameSession:
                 self._end_game(winner)
             
             return True
+        
+        # Fallback validation if NetworkGameLogic not available
+        elif not self.game_logic and self._basic_validate_move(from_pos, to_pos):
+            self._apply_move(from_pos, to_pos)
+            
+            message = {
+                'type': 'MOVE',
+                'from': from_pos,
+                'to': to_pos,
+                'player': self.current_player
+            }
+            self.network.send_message(json.dumps(message))
+            
+            self._switch_player()
+            return True
+        
         return False
     
     def _handle_network_message(self, message):
@@ -150,8 +166,12 @@ class GameSession:
                 to_pos = tuple(data['to'])
                 player = data['player']
                 
-                # Apply opponent's move
+                print(f"[GAME] Applying opponent move: {from_pos} -> {to_pos} for player {player}")
+                
+                # Apply opponent's move WITHOUT switching player first
                 self._apply_move(from_pos, to_pos)
+                
+                # NOW switch player
                 self._switch_player()
                 
                 winner = None
@@ -162,7 +182,7 @@ class GameSession:
                 if winner:
                     self._end_game(winner)
                 
-                print(f"[GAME] Move received: {from_pos} -> {to_pos}")
+                print(f"[GAME] Move received and applied: {from_pos} -> {to_pos}")
             
             elif msg_type == 'GAME_END':
                 winner = data['winner']
@@ -187,26 +207,39 @@ class GameSession:
         
         to_row, to_col = to_pos
         
+        print(f"[GAME] Applying move: {from_pos} -> {to_pos} for player {self.current_player}")
+        
         if self.game_type == 3:  # Isolation
             # For Isolation, just place the piece
             dest_color = self.board[to_row][to_col] // 10
             self.board[to_row][to_col] = dest_color * 10 + self.current_player
+            print(f"[GAME] Placed piece at ({to_row}, {to_col}) for player {self.current_player}")
         
         else:  # Katarenga and Congress
             if from_pos is None:
+                print("[ERROR] from_pos is None for Katarenga/Congress move!")
                 return
             
             from_row, from_col = from_pos
             
-            # Move piece from source to destination
+            # Verify source has correct player piece
             piece = self.board[from_row][from_col]
+            if piece % 10 != self.current_player:
+                print(f"[ERROR] Player {self.current_player} trying to move piece that belongs to player {piece % 10}")
+                return
+            
+            # Move piece from source to destination
+            print(f"[GAME] Moving piece from ({from_row}, {from_col}) to ({to_row}, {to_col})")
             
             # Clear source square
-            self.board[from_row][from_col] = (piece // 10) * 10
+            source_color = piece // 10
+            self.board[from_row][from_col] = source_color * 10
             
             # Place piece at destination
             dest_color = self.board[to_row][to_col] // 10
             self.board[to_row][to_col] = dest_color * 10 + self.current_player
+            
+            print(f"[GAME] Moved player {self.current_player} piece to ({to_row}, {to_col})")
         
         # Update move rules with new board state
         if self.moves_rules:

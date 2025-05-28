@@ -4,11 +4,11 @@ from Online.NetworkManager import NetworkManager
 from Online.GameSession import GameSession
 from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Online.NetworkGameAdapter import NetworkGameAdapter
-
+import copy
 
 class HostUI(BaseUI):
 
-    def __init__(self, title="Héberger une partie"):
+    def __init__(self, title="Host Game"):
         super().__init__(title)
         
         self.network = NetworkManager()
@@ -27,7 +27,7 @@ class HostUI(BaseUI):
         self.setup_ui()
     
     def setup_ui(self):
-        self.title_surface = self.title_font.render("Héberger une partie", True, (255, 255, 255))
+        self.title_surface = self.title_font.render("Host game", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 80))
         
         self.back_button = pygame.Rect(20, 20, 120, 40)
@@ -87,19 +87,19 @@ class HostUI(BaseUI):
             return
         
         if not self.server_started:
-            # Sélection du jeu
+            # Game selection
             for button in self.game_buttons:
                 if button['rect'].collidepoint(pos):
                     self.selected_game = button['game_id']
-                    print(f"[HOST] Jeu sélectionné: {button['name']}")
+                    print(f"[HOST] Game selected: {button['name']}")
                     return
             
-            # Démarrage du serveur
+            # Start server
             if self.start_server_button.collidepoint(pos) and self.selected_game:
                 self.start_server()
         
         elif self.client_connected and not self.board_selected:
-            # Sélection du plateau
+            # Board selection
             if self.select_board_button.collidepoint(pos):
                 self.launch_board_selection()
     
@@ -113,9 +113,9 @@ class HostUI(BaseUI):
                 disconnect_callback=self.handle_client_disconnect
             )
             
-            print(f"[HOST] Server launch - IP: {self.network.get_local_ip()}")
+            print(f"[HOST] Server launched - IP: {self.network.get_local_ip()}")
         else:
-            print("[ERROR] Impossible to start the server")
+            print("[ERROR] Unable to start server")
     
     def handle_network_message(self, message):
         print(f"[HOST] Message received: {message}")
@@ -134,7 +134,7 @@ class HostUI(BaseUI):
         self.client_connected = False
         self.waiting_for_client = True
         self.board_selected = False
-        print("[HOST] Client disconnected, waiting for a new client...")
+        print("[HOST] Client disconnected, waiting for new client...")
     
     def launch_board_selection(self):
         print(f"[HOST] Launching board selection for game type {self.selected_game}")
@@ -142,8 +142,8 @@ class HostUI(BaseUI):
         # Create game session
         self.session = GameSession(self.selected_game, self.network)
         
-        # Launch board selection
-        selector = SquareSelectorUi(self.selected_game)
+        # Launch board selection in NETWORK MODE
+        selector = SquareSelectorUi(self.selected_game, network_mode=True)
         selector.run()
         
         # Get the created board
@@ -195,29 +195,30 @@ class HostUI(BaseUI):
             self.running = False
     
     def _place_pawns_katarenga(self, board):
-        """Place les pions pour Katarenga (même logique que dans Katarenga.py)"""
+        """Place pawns for Katarenga (same logic as in Katarenga.py)"""
         import copy
         new_board = copy.deepcopy(board)
         
-        # First row, columns 1 to 9 (top of the board)
+        # First row, columns 1 to 8 (top of the board) - Player 2
         for col in range(1, 9):
-            color = new_board[1][col] // 10
-            new_board[1][col] = color * 10 + 2  # Player 2
+            if col < len(new_board[0]):
+                color = new_board[1][col] // 10
+                new_board[1][col] = color * 10 + 2  # Player 2
         
-        # Last row, columns 1 to 9
+        # Last row, columns 1 to 8 - Player 1
         for col in range(1, 9):
-            color = new_board[8][col] // 10
-            new_board[8][col] = color * 10 + 1  # Player 1
+            if col < len(new_board[0]) and len(new_board) > 8:
+                color = new_board[8][col] // 10
+                new_board[8][col] = color * 10 + 1  # Player 1
         
         return new_board
     
     def _place_pawns_congress(self, board):
-        """Place les pions pour Congress (même logique que dans Congress.py)"""
-        import copy
+        """Place pawns for Congress (same logic as in Congress.py)"""
         new_board = copy.deepcopy(board)
         grid_dim = len(new_board)
         
-        # Nettoyer le plateau d'abord
+        # Clean board first
         for i in range(grid_dim):
             for j in range(grid_dim):
                 color_code = new_board[i][j] // 10
@@ -240,14 +241,16 @@ class HostUI(BaseUI):
         for r, c in blacks:
             if r < grid_dim and c < grid_dim:
                 r2, c2 = shift(r, c)
-                code = new_board[r2][c2] // 10
-                new_board[r2][c2] = code * 10 + 2
+                if r2 < grid_dim and c2 < grid_dim:
+                    code = new_board[r2][c2] // 10
+                    new_board[r2][c2] = code * 10 + 2  # Player 2
         
         for r, c in whites:
             if r < grid_dim and c < grid_dim:
                 r2, c2 = shift(r, c)
-                code = new_board[r2][c2] // 10
-                new_board[r2][c2] = code * 10 + 1
+                if r2 < grid_dim and c2 < grid_dim:
+                    code = new_board[r2][c2] // 10
+                    new_board[r2][c2] = code * 10 + 1  # Player 1
         
         return new_board
     
@@ -262,7 +265,7 @@ class HostUI(BaseUI):
         
         pygame.draw.rect(screen, (70, 70, 70), self.back_button)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button, 2)
-        back_text = self.button_font.render("Retour", True, (255, 255, 255))
+        back_text = self.button_font.render("Back", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button.center))
         
         if not self.server_started:
@@ -274,7 +277,7 @@ class HostUI(BaseUI):
         for button in self.game_buttons:
             color = button['color']
             if self.selected_game == button['game_id']:
-                # Surbrillance pour le jeu sélectionné
+                # Highlight selected game
                 pygame.draw.rect(screen, (255, 255, 255), button['rect'], 3)
             
             pygame.draw.rect(screen, color, button['rect'])
@@ -288,14 +291,14 @@ class HostUI(BaseUI):
         pygame.draw.rect(screen, button_color, self.start_server_button)
         pygame.draw.rect(screen, (255, 255, 255), self.start_server_button, 2)
         
-        start_text = self.button_font.render("Démarrer le serveur", True, (255, 255, 255))
+        start_text = self.button_font.render("Start Server", True, (255, 255, 255))
         screen.blit(start_text, start_text.get_rect(center=self.start_server_button.center))
         
         # Instructions
         if not self.selected_game:
-            instruction = "Sélectionnez un jeu puis démarrez le serveur"
+            instruction = "Select a game to host and click 'Start Server'"
         else:
-            instruction = f"Jeu sélectionné: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}"
+            instruction = f"Game selected: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}"
         
         inst_surface = self.info_font.render(instruction, True, (200, 200, 200))
         screen.blit(inst_surface, (50, self.info_y))
@@ -303,14 +306,14 @@ class HostUI(BaseUI):
     def draw_server_status(self, screen):
         status = self.network.get_status()
         
-        # Informations of the server
+        # Server information
         info_texts = [
-            f"Server on : {status['local_ip']}:5000",
-            f"Clients connected: {status['clients_count']}/1"
+            f"Server running on: {status['local_ip']}:5000",
+            f"Connected clients: {status['clients_count']}/1"
         ]
         
         if self.waiting_for_client:
-            info_texts.append("Waiting for a client to connect...")
+            info_texts.append("Waiting for client to connect...")
             status_color = (255, 255, 100)
         elif self.client_connected and not self.board_selected:
             info_texts.append("Player connected - Ready to select board")
