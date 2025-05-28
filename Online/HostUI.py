@@ -305,6 +305,8 @@ class HostUI(BaseUI):
         inst_surface = self.info_font.render(instruction, True, (200, 200, 200))
         screen.blit(inst_surface, (50, self.info_y))
     
+    def update(self):
+        pass
     def draw_server_status(self, screen):
         status = self.network.get_status()
         
