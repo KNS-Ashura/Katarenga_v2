@@ -33,11 +33,11 @@ class NetworkManager:
             # Launch thread to accept clients
             threading.Thread(target=self._accept_clients, daemon=True).start()
             
-            print(f"[SERVER] Server started on port: {port}")
+            #print(f"Server started on port: {port}")
             return True
             
         except Exception as e:
-            print(f"[ERROR] Unable to start server: {e}")
+            #print(f"Unable to start server: {e}")
             return False
     
     def _accept_clients(self):
@@ -45,14 +45,14 @@ class NetworkManager:
             try:
                 client_socket, client_address = self.server_socket.accept()
                 self.clients.append(client_socket)
-                print(f"[SERVER] Client connected: {client_address}")
+                #print(f"Client connected: {client_address}")
                 
                 # Launch thread to listen to this client
                 threading.Thread(target=self._listen_client, args=(client_socket,), daemon=True).start()
                 
             except Exception as e:
                 if self.is_connected:
-                    print(f"[ERROR] Error accepting client: {e}")
+                    print(f"Error accepting client: {e}")
                 break
     
     def _listen_client(self, client_socket):
@@ -67,7 +67,7 @@ class NetworkManager:
                     break
                     
             except Exception as e:
-                print(f"[ERROR] Reception error: {e}")
+                #print(f"Reception error: {e}")
                 break
         
         # Client disconnected
@@ -90,11 +90,11 @@ class NetworkManager:
             # Launch thread to listen to server
             threading.Thread(target=self._listen_server, daemon=True).start()
             
-            print(f"[CLIENT] Connected to server {host_ip}:{port}")
+            #print(f"Connected to server {host_ip}:{port}")
             return True
             
         except Exception as e:
-            print(f"[ERROR] Unable to connect: {e}")
+            #print(f"Unable to connect: {e}")
             return False
     
     def _listen_server(self):
@@ -109,7 +109,7 @@ class NetworkManager:
                     break
                     
             except Exception as e:
-                print(f"[ERROR] Reception error: {e}")
+                #print(f"Reception error: {e}")
                 break
         
         # Server disconnected
@@ -132,7 +132,7 @@ class NetworkManager:
             return True
             
         except Exception as e:
-            print(f"[ERROR] Send error: {e}")
+            print(f"Send error: {e}")
             return False
     
     def disconnect(self):
@@ -150,7 +150,7 @@ class NetworkManager:
             client.close()
         self.clients.clear()
         
-        print("[NETWORK] Disconnected")
+        #print("Disconnected")
     
     def get_local_ip(self):
         try:

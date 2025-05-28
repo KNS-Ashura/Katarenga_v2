@@ -1,22 +1,16 @@
-# Game_ui/NetworkGameLogic.py
 from collections import deque
 
 class NetworkGameLogic:
-    """
-    Handles all game-specific logic for network games.
-    Separates game rules from network communication.
-    """
+    
     
     def validate_move(self, board, moves_rules, game_type, current_player, from_pos, to_pos):
-        """
-        Complete move validation for all game types
-        """
+        
         if not moves_rules or not board:
             return False
         
         to_row, to_col = to_pos
         
-        # Check destination is within bounds
+        # Check destination limits
         if not (0 <= to_row < len(board) and 0 <= to_col < len(board[0])):
             return False
         
@@ -30,14 +24,14 @@ class NetworkGameLogic:
         return False
     
     def _validate_isolation_move(self, board, moves_rules, current_player, from_pos, to_pos):
-        """Validate Isolation move (placement only)"""
+       
         to_row, to_col = to_pos
         
-        # For Isolation, from_pos should be None (placement, not movement)
+        # For Isolation
         if from_pos is not None:
             return False
         
-        # Check square is free
+        # Check if square is free
         case = board[to_row][to_col]
         if case % 10 != 0:
             return False
@@ -46,21 +40,21 @@ class NetworkGameLogic:
         if case in (0, 50, 60):
             return False
         
-        # Check square is not under attack ("en prise")
+        # Check square is not ("en prise") = under attack
         if self._is_square_under_attack(board, moves_rules, to_row, to_col):
             return False
         
         return True
     
     def _validate_katarenga_move(self, board, moves_rules, current_player, from_pos, to_pos):
-        """Validate Katarenga move with special corner rules"""
+        
         if from_pos is None:
             return False
         
         from_row, from_col = from_pos
         to_row, to_col = to_pos
         
-        # Check source position is within bounds
+        # Check source position is in limits
         if not (0 <= from_row < len(board) and 0 <= from_col < len(board[0])):
             return False
         
@@ -69,7 +63,7 @@ class NetworkGameLogic:
         if case_color % 10 != current_player:
             return False
         
-        # Special corner escape moves
+       
         # Player 1 can move from row 8 (cols 1-8) to victory corners (9,0) or (9,9)
         if (current_player == 1 and from_row == 8 and 1 <= from_col <= 8 
             and (to_row, to_col) in [(9, 0), (9, 9)]):
@@ -84,13 +78,13 @@ class NetworkGameLogic:
         return moves_rules.verify_move(case_color, from_row, from_col, to_row, to_col)
     
     def _validate_congress_move(self, board, moves_rules, current_player, from_pos, to_pos):
-        """Validate Congress move (standard movement rules)"""
+        
         if from_pos is None:
             return False
         
         from_row, from_col = from_pos
         
-        # Check source position is within bounds
+        # Check source position is in limits
         if not (0 <= from_row < len(board) and 0 <= from_col < len(board[0])):
             return False
         
@@ -103,9 +97,7 @@ class NetworkGameLogic:
         return moves_rules.verify_move(case_color, from_row, from_col, to_pos[0], to_pos[1])
     
     def check_victory(self, board, game_type, current_player):
-        """
-        Check victory conditions for all game types
-        """
+        
         if game_type == 1:  # Katarenga
             return self._check_katarenga_victory(board)
         elif game_type == 2:  # Congress
@@ -116,11 +108,7 @@ class NetworkGameLogic:
         return None
     
     def _check_katarenga_victory(self, board):
-        """
-        Katarenga victory conditions:
-        1. Eliminate all opponent pawns
-        2. Occupy both victory corners
-        """
+        
         player1_count = 0
         player2_count = 0
         
@@ -139,23 +127,20 @@ class NetworkGameLogic:
         if player2_count == 0:
             return 1
         
-        # Victory by corner occupation (assuming 10x10 board)
+        # Victory by corner occupation 
         if len(board) >= 10 and len(board[0]) >= 10:
-            # Player 1 wins if occupies both bottom corners
+            # Player 2 wins if occupies both bottom corners
             if board[9][0] % 10 == 1 and board[9][9] % 10 == 1:
                 return 1
             
-            # Player 2 wins if occupies both top corners  
+            # Player 1 wins if occupies both top corners  
             if board[0][0] % 10 == 2 and board[0][9] % 10 == 2:
                 return 2
         
         return None
     
     def _check_congress_victory(self, board):
-        """
-        Congress victory condition:
-        All player's pawns must be connected in one group
-        """
+       
         grid_dim = len(board)
         
         for player in [1, 2]:
@@ -186,11 +171,7 @@ class NetworkGameLogic:
         return None
     
     def _check_isolation_victory(self, board, current_player):
-        """
-        Isolation victory conditions:
-        1. Board is full (last player to move wins)
-        2. Current player cannot make any legal move (opponent wins)
-        """
+       
         # Count total moves made
         total_moves = 0
         for row in range(len(board)):
@@ -205,14 +186,14 @@ class NetworkGameLogic:
             return current_player  # Last player to move wins
         
         # Check if current player can still play
-        if not self._can_play_isolation(board, current_player):
+        if not self.can_play_isolation(board, current_player):
             # Current player cannot play, opponent wins
             return 2 if current_player == 1 else 1
         
         return None
     
-    def _can_play_isolation(self, board, current_player):
-        """Check if current player can make a move in Isolation"""
+    def can_play_isolation(self, board, current_player):
+        
         for i in range(len(board)):
             for j in range(len(board[0])):
                 case = board[i][j]
@@ -221,15 +202,12 @@ class NetworkGameLogic:
                     continue
                 
                 # Check if square is not "en prise" (under attack)
-                if not self._is_square_under_attack(board, None, i, j):
+                if not self.is_square_under_attack(board, None, i, j):
                     return True
         return False
     
-    def _is_square_under_attack(self, board, moves_rules, x, y):
-        """
-        Check if a square is under attack by any opponent piece
-        This implements the "en prise" rule for Isolation
-        """
+    def is_square_under_attack(self, board, moves_rules, x, y):
+       
         # Create temporary moves_rules if not provided
         if moves_rules is None:
             from Game_ui.move_rules import Moves_rules
@@ -248,9 +226,7 @@ class NetworkGameLogic:
         return False
     
     def get_valid_moves(self, board, moves_rules, game_type, current_player):
-        """
-        Get all valid moves for current player (useful for AI or move hints)
-        """
+        
         valid_moves = []
         
         if game_type == 3:  # Isolation
@@ -275,9 +251,7 @@ class NetworkGameLogic:
         return valid_moves
     
     def is_game_over(self, board, game_type, current_player):
-        """
-        Check if game is over (victory or no moves available)
-        """
+        
         # Check for victory
         winner = self.check_victory(board, game_type, current_player)
         if winner:
@@ -293,9 +267,7 @@ class NetworkGameLogic:
         return False, None
     
     def get_game_state_info(self, board, game_type, current_player):
-        """
-        Get useful information about current game state
-        """
+       
         info = {
             'current_player': current_player,
             'game_type': game_type,
@@ -305,7 +277,7 @@ class NetworkGameLogic:
             'player2_pieces': sum(1 for row in board for cell in row if cell % 10 == 2),
         }
         
-        # Game-specific information
+        # Game  information
         if game_type == 1:  # Katarenga
             info['corner_status'] = self._get_katarenga_corner_status(board)
         elif game_type == 2:  # Congress
@@ -317,7 +289,7 @@ class NetworkGameLogic:
         return info
     
     def _get_katarenga_corner_status(self, board):
-        """Get status of victory corners in Katarenga"""
+        
         if len(board) < 10 or len(board[0]) < 10:
             return {}
         
@@ -329,7 +301,7 @@ class NetworkGameLogic:
         }
     
     def _get_congress_connectivity(self, board):
-        """Get connectivity information for Congress"""
+        
         connectivity = {}
         
         for player in [1, 2]:
@@ -344,7 +316,7 @@ class NetworkGameLogic:
                 for pos in positions:
                     if pos not in visited:
                         components += 1
-                        # BFS to mark all connected positions
+                        
                         queue = deque([pos])
                         visited.add(pos)
                         

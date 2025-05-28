@@ -2,13 +2,12 @@
 import json
 import copy
 from Game_ui.move_rules import Moves_rules
+from Online.NetworkGameLogic import NetworkGameLogic
 
-# Try to import NetworkGameLogic, fallback if not available
 try:
-    from Online.NetworkGameLogic import NetworkGameLogic
     NETWORK_LOGIC_AVAILABLE = True
 except ImportError:
-    print("[WARNING] NetworkGameLogic not found, using basic validation only")
+    print("NetworkGameLogic not found, using basic validation only")
     NETWORK_LOGIC_AVAILABLE = False
 
 class GameSession:
@@ -51,7 +50,7 @@ class GameSession:
         # Initialize movement rules with new board
         self.moves_rules = Moves_rules(self.board)
         
-        print(f"[GAME] Board set - Size: {len(self.board)}x{len(self.board[0]) if self.board else 0}")
+        
         
         if self.is_host:
             # Send board data to client
@@ -61,11 +60,11 @@ class GameSession:
                 'game_type': self.game_type
             }
             self.network.send_message(json.dumps(message))
-            print(f"[GAME] Sent board data to client - Game type: {self.game_type}")
+            #print(f"Sent board data to client - Game type: {self.game_type}")
     
     def start_game(self):
         if not self.board:
-            print("[ERROR] No board set for the game")
+            #print("No board set for the game")
             return False
         
         self.game_started = True
@@ -81,7 +80,7 @@ class GameSession:
         if self.on_player_change:
             self.on_player_change(self.current_player)
         
-        print(f"[GAME] Game started - Type: {self.game_type}")
+        print(f"Game started - Type: {self.game_type}")
         return True
     
     def make_move(self, from_pos, to_pos):
@@ -91,7 +90,7 @@ class GameSession:
         # Check if it's the player's turn
         local_player = 1 if self.is_host else 2
         if self.current_player != local_player:
-            print("[GAME] It's not your turn")
+            print("It's not your turn")
             return False
         
         # Validate and apply move using game logic
@@ -123,7 +122,7 @@ class GameSession:
             
             return True
         
-        # Fallback validation if NetworkGameLogic not available
+        # Fallback validation if NetworkGameLogic not working correctly
         elif not self.game_logic and self._basic_validate_move(from_pos, to_pos):
             self._apply_move(from_pos, to_pos)
             
@@ -152,21 +151,21 @@ class GameSession:
                 self.moves_rules = Moves_rules(self.board)
                 if self.on_board_update:
                     self.on_board_update(self.board)
-                print("[GAME] Board received")
+                #print("Board received")
             
             elif msg_type == 'GAME_START':
                 self.game_started = True
                 self.current_player = data['current_player']
                 if self.on_player_change:
                     self.on_player_change(self.current_player)
-                print("[GAME] Game started by host")
+                #print("Game started by host")
             
             elif msg_type == 'MOVE':
                 from_pos = tuple(data['from']) if data['from'] else None
                 to_pos = tuple(data['to'])
                 player = data['player']
                 
-                print(f"[GAME] Applying opponent move: {from_pos} -> {to_pos} for player {player}")
+                #print(f"Applying opponent move: {from_pos} -> {to_pos} for player {player}")
                 
                 # Apply opponent's move WITHOUT switching player first
                 self._apply_move(from_pos, to_pos)
@@ -182,22 +181,22 @@ class GameSession:
                 if winner:
                     self._end_game(winner)
                 
-                print(f"[GAME] Move received and applied: {from_pos} -> {to_pos}")
+                #print(f"Move received and applied: {from_pos} -> {to_pos}")
             
             elif msg_type == 'GAME_END':
                 winner = data['winner']
                 self._end_game(winner)
-                print(f"[GAME] VICTORY! Winner: {winner}")
+                #print(f"VICTORY! Winner: {winner}")
             
             elif msg_type == 'CHAT':
                 message_text = data['message']
-                print(f"[CHAT] {message_text}")
+                #print(f"{message_text}")
         
         except Exception as e:
-            print(f"[ERROR] Error processing message: {e}")
+            print(f" Error processing message: {e}")
     
     def _handle_disconnect(self):
-        print("[GAME] Opponent disconnected")
+        #print("Opponent disconnected")
         if not self.game_finished:
             self._end_game("Disconnection")
     
@@ -207,17 +206,17 @@ class GameSession:
         
         to_row, to_col = to_pos
         
-        print(f"[GAME] Applying move: {from_pos} -> {to_pos} for player {self.current_player}")
+        #print(f"Applying move: {from_pos} -> {to_pos} for player {self.current_player}")
         
         if self.game_type == 3:  # Isolation
             # For Isolation, just place the piece
             dest_color = self.board[to_row][to_col] // 10
             self.board[to_row][to_col] = dest_color * 10 + self.current_player
-            print(f"[GAME] Placed piece at ({to_row}, {to_col}) for player {self.current_player}")
+            #print(f"Placed piece at ({to_row}, {to_col}) for player {self.current_player}")
         
         else:  # Katarenga and Congress
             if from_pos is None:
-                print("[ERROR] from_pos is None for Katarenga/Congress move!")
+                print("Error : from is None")
                 return
             
             from_row, from_col = from_pos
@@ -225,11 +224,11 @@ class GameSession:
             # Verify source has correct player piece
             piece = self.board[from_row][from_col]
             if piece % 10 != self.current_player:
-                print(f"[ERROR] Player {self.current_player} trying to move piece that belongs to player {piece % 10}")
+                #print(f"Player {self.current_player} trying to move piece that belongs to player {piece % 10}")
                 return
             
-            # Move piece from source to destination
-            print(f"[GAME] Moving piece from ({from_row}, {from_col}) to ({to_row}, {to_col})")
+            
+            #print(f"Moving piece from ({from_row}, {from_col}) to ({to_row}, {to_col})")
             
             # Clear source square
             source_color = piece // 10
@@ -239,7 +238,7 @@ class GameSession:
             dest_color = self.board[to_row][to_col] // 10
             self.board[to_row][to_col] = dest_color * 10 + self.current_player
             
-            print(f"[GAME] Moved player {self.current_player} piece to ({to_row}, {to_col})")
+            #print(f"Moved player {self.current_player} piece to ({to_row}, {to_col})")
         
         # Update move rules with new board state
         if self.moves_rules:
@@ -283,8 +282,8 @@ class GameSession:
             'local_player': 1 if self.is_host else 2
         }
     
-    def get_game_info(self):
-        """Get detailed game state information"""
+    def get_game_info(self): #Get game state information
+        
         if self.board and self.game_logic:
             return self.game_logic.get_game_state_info(
                 self.board, self.game_type, self.current_player
@@ -292,15 +291,15 @@ class GameSession:
         return None
     
     def get_valid_moves(self):
-        """Get all valid moves for current player"""
+        
         if self.board and self.game_logic:
             return self.game_logic.get_valid_moves(
                 self.board, self.moves_rules, self.game_type, self.current_player
             )
         return []
     
-    def _basic_validate_move(self, from_pos, to_pos):
-        """Basic move validation as fallback when NetworkGameLogic is not available"""
+    def _basic_validate_move(self, from_pos, to_pos):#get move validation in message when NetworkGameLogic is not working correctly
+        
         if not self.moves_rules or not self.board:
             return False
         

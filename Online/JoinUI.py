@@ -98,7 +98,7 @@ class JoinUI(BaseUI):
             if not self.connecting and not self.connected:
                 self.attempt_connection()
         elif event.unicode.isprintable() and len(self.ip_text) < 15:
-            # Only allow printable characters and limit length
+            # Only allow printable characters and limit length for ip adress
             if event.unicode.isdigit() or event.unicode == ".":
                 self.ip_text += event.unicode
     
@@ -132,7 +132,7 @@ class JoinUI(BaseUI):
             self.set_status("Unable to connect", (255, 100, 100))
     
     def handle_network_message(self, message):
-        print(f"[CLIENT] Message received: {message}")
+        #print(f"Message received: {message}")
         
         try:
             import json
@@ -144,18 +144,18 @@ class JoinUI(BaseUI):
                 self.session = GameSession(data['game_type'], self.network)
                 self.session.set_board(data['board'])
                 self.set_status("Board received! Ready to play", (100, 255, 100))
-                print(f"[CLIENT] Board received for game type {data['game_type']}")
+                #print(f"Board received for game type {data['game_type']}")
             
             elif data.get('type') == 'GAME_START':
                 self.game_started = True
                 self.set_status("Game started!", (100, 255, 100))
-                print("[CLIENT] Game started by host")
+                #print("Game started by host")
                 # Auto-launch game when host starts
                 if self.board_received:
                     self.launch_network_game()
 
         except json.JSONDecodeError:
-            print(f"[CLIENT] Received non-JSON message: {message}")
+            #print(f"Received non-JSON message: {message}")
             if "READY" in message.upper() or "CLIENT_READY" in message:
                 self.set_status("Server ready", (100, 255, 100))
     
@@ -167,8 +167,8 @@ class JoinUI(BaseUI):
         self.set_status("Server disconnected", (255, 100, 100))
     
     def launch_network_game(self):
-        """Launch network game with NetworkGameAdapter"""
-        print("[CLIENT] Launching network game...")
+        
+        #print("Launching network game...")
         
         if self.session and self.board_received:
             # Create and launch network game adapter
@@ -181,7 +181,7 @@ class JoinUI(BaseUI):
     def set_status(self, message, color):
         self.status_message = message
         self.status_color = color
-        print(f"[STATUS] {message}")
+        #print(f"{message}")
     
     def update(self):
         self.cursor_timer += self.clock.get_time()
