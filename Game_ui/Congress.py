@@ -17,20 +17,17 @@ class Congress(BaseUI):
 
         self.base_board = copy.deepcopy(board)
 
-        # grid setup
         self.cell_size = 60
         self.grid_dim  = 10
         self.grid_size = self.cell_size * self.grid_dim
         self.top_offset  = 80
         self.left_offset = (self.get_width() - self.grid_size) // 2
 
-        # title
         self.title_font    = pygame.font.SysFont(None, 48)
         self.title_surface = self.title_font.render("Congress", True, (255, 255, 255))
         self.title_rect    = self.title_surface.get_rect(center=(self.get_width() // 2, 40))
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
 
-        # place pawns with quadrant shift
         self.board = self.place_pawn_congress(self.base_board)
 
         self.board_ui    = Board_draw_tools()
@@ -168,7 +165,6 @@ class Congress(BaseUI):
     def draw(self):
         screen = self.get_screen()
 
-        # Use background from BaseUI (blue gradient)
         screen.blit(self.get_background(), (0, 0))
 
         screen.blit(self.title_surface, self.title_rect)

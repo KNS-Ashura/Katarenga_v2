@@ -23,18 +23,15 @@ class WinScreen(BaseUI):
 
     def draw(self):
         screen = self.get_screen()
-        screen.fill((212, 237, 218))  # Couleur verte douce
+        screen.fill((212, 237, 218))
 
-        # Titre
         title_surf = self.title_font.render("Victoire", True, (21, 87, 36))
         screen.blit(title_surf, (self.get_width() // 2 - title_surf.get_width() // 2, 100))
 
-        # Nom du gagnant
         winner_text = f"Le gagnant est : {self.__player}"
         winner_surf = self.text_font.render(winner_text, True, (21, 87, 36))
         screen.blit(winner_surf, (self.get_width() // 2 - winner_surf.get_width() // 2, 200))
 
-        # Boutons
         for key, rect in self.buttons.items():
             pygame.draw.rect(screen, (255, 255, 255), rect)
             pygame.draw.rect(screen, (21, 87, 36), rect, 2)
@@ -61,7 +58,6 @@ class WinScreen(BaseUI):
                     if self.buttons["menu"].collidepoint(mouse_pos):
                         print("Retour au menu...")
                         self.running = False
-                        # ici tu peux appeler une autre fonction pour afficher le menu
                     elif self.buttons["quit"].collidepoint(mouse_pos):
                         print("Jeu quitté.")
                         pygame.quit()

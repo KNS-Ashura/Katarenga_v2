@@ -167,7 +167,6 @@ class SquareSelectorUi(BaseUI):
         if self.held_square_data is None:
             return
 
-        # Détermine le coin du plateau
         row = 0 if row < 4 else 4
         col = 0 if col < 4 else 4
 

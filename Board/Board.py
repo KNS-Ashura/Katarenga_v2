@@ -114,7 +114,7 @@ class Board:
         
     def load_from_file(self, filename: str):
         if not self.check_or_create_file(filename):
-            return  # Ne rien faire si le fichier n'existe pas ou est vide
+            return
 
         with open(filename, "r") as f:
             try:
@@ -142,18 +142,13 @@ class Board:
         new_board.insert(0, zero_row[:])
         new_board.append(zero_row[:])
 
-        new_board[0][0] = 50                   # top-left
-        new_board[0][-1] = 50                  # top-right
-        new_board[-1][0] = 60                  # bottom-left
-        new_board[-1][-1] = 60                 # bottom-right
+        new_board[0][0] = 50               
+        new_board[0][-1] = 50              
+        new_board[-1][0] = 60              
+        new_board[-1][-1] = 60             
 
         return new_board
 
-    
-    
-
-    
-    #getter and setter for the board
     def get_default_board(self):
         return self.__default_board
     

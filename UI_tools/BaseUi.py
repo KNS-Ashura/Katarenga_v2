@@ -17,7 +17,6 @@ class BaseUI:
 
         self.font = pygame.font.SysFont(None, 48)
 
-        # Crée une seule fois le fond dégradé radial bleu
         self.background_surface = self.create_blue_gradient_background()
 
     def get_screen(self):
@@ -33,7 +32,6 @@ class BaseUI:
         return self.background_surface
 
     def create_blue_gradient_background(self):
-        """Fond dégradé radial bleu identique à MainMenuUI"""
         width, height = self.__width, self.__height
         surface = pygame.Surface((width, height))
         center_x, center_y = width // 2, height // 2
