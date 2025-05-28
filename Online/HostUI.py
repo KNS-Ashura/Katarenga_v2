@@ -118,13 +118,17 @@ class HostUI(BaseUI):
             print("[ERROR] Impossible to start the server")
     
     def handle_network_message(self, message):
-        print(f"[HOST] Message receieve: {message}")
+        print(f"[HOST] Message received: {message}")
         
-        # Premier message = client connecté
+        # First message = client connected
         if not self.client_connected:
             self.client_connected = True
             self.waiting_for_client = False
-            print("[HOST] Client connected !")
+            print("[HOST] Client connected!")
+            
+            # Send confirmation to client
+            if hasattr(self, 'network') and self.network:
+                self.network.send_message("HOST_READY")
     
     def handle_client_disconnect(self):
         self.client_connected = False
@@ -145,6 +149,7 @@ class HostUI(BaseUI):
         # Get the created board
         if hasattr(selector, 'board') and selector.is_board_filled():
             self.board_selected = True
+            print("[HOST] Board selection completed successfully")
             
             # Prepare board according to game type
             if self.selected_game == 1:  # Katarenga
@@ -161,9 +166,16 @@ class HostUI(BaseUI):
                 final_board = selector.board_obj.create_final_board(selector.board)
                 # No pawn placement for Isolation
             
+            print(f"[HOST] Sending board to client - Game type: {self.selected_game}")
+            
             # Send board to client
             self.session.set_board(final_board)
             
+            # Wait a moment for board to be sent
+            import time
+            time.sleep(0.5)
+            
+            print("[HOST] Starting network game...")
             # Launch network game
             self.launch_network_game()
         else:

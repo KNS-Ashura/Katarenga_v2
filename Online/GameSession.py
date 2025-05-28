@@ -2,7 +2,14 @@
 import json
 import copy
 from Game_ui.move_rules import Moves_rules
-from Online.NetworkGameLogic import NetworkGameLogic
+
+# Try to import NetworkGameLogic, fallback if not available
+try:
+    from Online.NetworkGameLogic import NetworkGameLogic
+    NETWORK_LOGIC_AVAILABLE = True
+except ImportError:
+    print("[WARNING] NetworkGameLogic not found, using basic validation only")
+    NETWORK_LOGIC_AVAILABLE = False
 
 class GameSession:
     
@@ -19,7 +26,10 @@ class GameSession:
         self.moves_rules = None
         
         # Game logic handler
-        self.game_logic = NetworkGameLogic()
+        if NETWORK_LOGIC_AVAILABLE:
+            self.game_logic = NetworkGameLogic()
+        else:
+            self.game_logic = None
         
         # Callbacks for game events
         self.on_board_update = None
@@ -41,6 +51,8 @@ class GameSession:
         # Initialize movement rules with new board
         self.moves_rules = Moves_rules(self.board)
         
+        print(f"[GAME] Board set - Size: {len(self.board)}x{len(self.board[0]) if self.board else 0}")
+        
         if self.is_host:
             # Send board data to client
             message = {
@@ -49,6 +61,7 @@ class GameSession:
                 'game_type': self.game_type
             }
             self.network.send_message(json.dumps(message))
+            print(f"[GAME] Sent board data to client - Game type: {self.game_type}")
     
     def start_game(self):
         if not self.board:
@@ -82,7 +95,7 @@ class GameSession:
             return False
         
         # Validate and apply move using game logic
-        if self.game_logic.validate_move(
+        if self.game_logic and self.game_logic.validate_move(
             self.board, self.moves_rules, self.game_type, 
             self.current_player, from_pos, to_pos
         ):
@@ -99,14 +112,16 @@ class GameSession:
             
             self._switch_player()
             
-            winner = self.game_logic.check_victory(
-                self.board, self.game_type, self.current_player
-            )
+            winner = None
+            if self.game_logic:
+                winner = self.game_logic.check_victory(
+                    self.board, self.game_type, self.current_player
+                )
+            
             if winner:
                 self._end_game(winner)
             
             return True
-        
         return False
     
     def _handle_network_message(self, message):
@@ -139,9 +154,11 @@ class GameSession:
                 self._apply_move(from_pos, to_pos)
                 self._switch_player()
                 
-                winner = self.game_logic.check_victory(
-                    self.board, self.game_type, self.current_player
-                )
+                winner = None
+                if self.game_logic:
+                    winner = self.game_logic.check_victory(
+                        self.board, self.game_type, self.current_player
+                    )
                 if winner:
                     self._end_game(winner)
                 
@@ -248,3 +265,25 @@ class GameSession:
                 self.board, self.moves_rules, self.game_type, self.current_player
             )
         return []
+    
+    def _basic_validate_move(self, from_pos, to_pos):
+        """Basic move validation as fallback when NetworkGameLogic is not available"""
+        if not self.moves_rules or not self.board:
+            return False
+        
+        to_row, to_col = to_pos
+        if not (0 <= to_row < len(self.board) and 0 <= to_col < len(self.board[0])):
+            return False
+        
+        if self.game_type == 3:  # Isolation
+            return from_pos is None and self.board[to_row][to_col] % 10 == 0
+        else:  # Katarenga and Congress
+            if from_pos is None:
+                return False
+            from_row, from_col = from_pos
+            if not (0 <= from_row < len(self.board) and 0 <= from_col < len(self.board[0])):
+                return False
+            case_color = self.board[from_row][from_col]
+            if case_color % 10 != self.current_player:
+                return False
+            return self.moves_rules.verify_move(case_color, from_row, from_col, to_row, to_col)
