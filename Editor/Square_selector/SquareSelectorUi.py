@@ -16,7 +16,7 @@ class SquareSelectorUi(BaseUI):
         self.board = self.board_obj.get_default_board()
         
         self.gamemode = gamemode
-        self.network_mode = network_mode  # NEW: Network mode flag
+        self.network_mode = network_mode  # Flag to distinguish network vs local mode
 
         self.cell_size = 50
         self.grid_dim = 8
@@ -25,7 +25,7 @@ class SquareSelectorUi(BaseUI):
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
 
-        # Update title based on mode
+        # Set title depending on mode
         if self.network_mode:
             title_text = "Select Board for Network Game"
         else:
@@ -37,9 +37,9 @@ class SquareSelectorUi(BaseUI):
         self.left_offset = (self.get_width() - self.grid_size) // 2
 
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
-        
         self.start_button_rect = pygame.Rect(self.get_width() // 2 - 100, self.get_height() - 70, 200, 50)
 
+        # Load predefined squares from file
         self.board_obj.load_from_file("game_data.json")
         self.square_list = self.board_obj.get_square_list()
         self.square_buttons = self.create_square_buttons()
@@ -48,11 +48,12 @@ class SquareSelectorUi(BaseUI):
         self.holding_square = False 
         self.held_square_data = None
         
-        # AI checkbox only for local games
+        # AI toggle checkbox (only for local games)
         self.__ai = False
         self.checkbox_rect = pygame.Rect(20, 220, 20, 20)
         
     def is_board_filled(self):
+        # Check if the board has no empty cells (0 means empty)
         for row in self.board:
             for cell in row:
                 if cell == 0:
@@ -85,12 +86,15 @@ class SquareSelectorUi(BaseUI):
 
     def handle_events(self):
         for event in pygame.event.get():
+            # Quit game on close or ESC
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.running = False
 
+            # Left mouse click
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.handle_click(event.pos)
 
+            # Keyboard inputs to rotate or flip held square
             elif event.type == pygame.KEYDOWN and self.holding_square:
                 if event.key == pygame.K_r:
                     self.rotate_square_right()
@@ -103,10 +107,12 @@ class SquareSelectorUi(BaseUI):
         x, y = position
         square_rect = None
 
+        # Back button clicked
         if self.back_button_rect.collidepoint(x, y):
             self.running = False
             return
 
+        # Place held square on board if click inside board area
         if self.holding_square:
             if self.is_on_board(x, y):
                 row = (y - self.top_offset) // self.cell_size
@@ -116,6 +122,7 @@ class SquareSelectorUi(BaseUI):
                 self.held_square_data = None
                 return
 
+        # Check if a square button is clicked to select it
         for name, rect in self.square_buttons:
             if rect.collidepoint(position):
                 self.selected_square = name
@@ -124,6 +131,7 @@ class SquareSelectorUi(BaseUI):
                 print(f"Square selected: {name}")
                 return
 
+        # If a square is selected, check if clicked inside preview to "hold" it for placement
         if self.selected_square:
             square_cell_size = 40
             square_width = 4 * square_cell_size
@@ -137,25 +145,24 @@ class SquareSelectorUi(BaseUI):
                 print(f"Square attached: {self.selected_square}")
                 return
             
-        # AI checkbox only for local games
+        # AI checkbox toggle only in local mode
         if not self.network_mode and self.checkbox_rect.collidepoint(x, y):
             self.__ai = not self.__ai
             return
             
-        # Start button handling
+        # Start/Confirm button clicked
         if self.start_button_rect.collidepoint(x, y):
             if self.is_board_filled():
                 if self.network_mode:
-                    # Network mode: just close and return to host
+                    # Network mode: just confirm and exit UI
                     print("[NETWORK] Board selection completed for network game")
                     self.running = False
                     return
                 else:
-                    # Local mode: launch game normally
+                    # Local mode: prepare and launch selected game mode
                     print("Launching local game")
                     
                     pre_final_board = self.board_obj.create_final_board(self.board)
-                    
                     final_board = self.board_obj.add_border_and_corners(pre_final_board)
                     
                     if self.gamemode == 1:
@@ -172,6 +179,7 @@ class SquareSelectorUi(BaseUI):
                 return
 
     def is_on_board(self, x, y):
+        # Check if pixel (x,y) is within board grid area
         return (
             self.left_offset <= x < self.left_offset + self.grid_size
             and self.top_offset <= y < self.top_offset + self.grid_size
@@ -181,9 +189,11 @@ class SquareSelectorUi(BaseUI):
         if self.held_square_data is None:
             return
 
+        # Snap placement to quadrants (0 or 4)
         row = 0 if row < 4 else 4
         col = 0 if col < 4 else 4
 
+        # Place 4x4 square data on board starting at (row, col)
         for i in range(4):
             for j in range(4):
                 self.board[row + i][col + j] = self.held_square_data[i][j]
@@ -191,14 +201,17 @@ class SquareSelectorUi(BaseUI):
         print(f"Square placed in quadrant ({row}, {col})")
 
     def rotate_square_right(self):
-            self.held_square_data = self.board_obj.rotate_right(self.held_square_data)
-            print("Square rotated right")
+        # Rotate held square 90 degrees clockwise
+        self.held_square_data = self.board_obj.rotate_right(self.held_square_data)
+        print("Square rotated right")
 
     def rotate_square_left(self):
+        # Rotate held square 90 degrees counter-clockwise
         self.held_square_data = self.board_obj.rotate_left(self.held_square_data)
         print("Square rotated left")
 
     def flip_square(self):
+        # Flip held square horizontally
         self.held_square_data = self.board_obj.flip_horizontal(self.held_square_data)
         print("Square flipped horizontally")
 
@@ -207,6 +220,7 @@ class SquareSelectorUi(BaseUI):
         screen.fill((30, 30, 30))
         screen.blit(self.title_surface, self.title_rect)
 
+        # Draw board grid cells
         for row in range(8):
             for col in range(8):
                 rect = pygame.Rect(
@@ -219,103 +233,80 @@ class SquareSelectorUi(BaseUI):
                 pygame.draw.rect(screen, color, rect)
                 pygame.draw.rect(screen, (255, 255, 255), rect, 1)
 
+        # Draw back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = self.button_font.render("Back", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
         
+        # Draw start/confirm button (green if ready, gray otherwise)
         is_ready = self.is_board_filled()
         button_color = (0, 200, 0) if is_ready else (100, 100, 100)
 
         pygame.draw.rect(screen, button_color, self.start_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.start_button_rect, 2)
 
-        # Change button text based on mode
         if self.network_mode:
             start_text = self.button_font.render("Confirm Board", True, (255, 255, 255))
         else:
             start_text = self.button_font.render("Launch Game", True, (255, 255, 255))
         screen.blit(start_text, start_text.get_rect(center=self.start_button_rect.center))
-        
-        # AI checkbox only for local games
-        if not self.network_mode:
-            pygame.draw.rect(screen, (255, 255, 255), self.checkbox_rect, 2)
-            
-            if self.__ai:
-                pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topleft, self.checkbox_rect.bottomright, 2)
-                pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topright, self.checkbox_rect.bottomleft, 2)
 
-            label = self.button_font.render("Activate AI", True, (255, 255, 255))
-            screen.blit(label, (self.checkbox_rect.right + 10, self.checkbox_rect.top - 2))
-
+        # Draw square buttons for selection
         for name, rect in self.square_buttons:
-            pygame.draw.rect(screen, (70, 70, 70), rect)
-            pygame.draw.rect(screen, (255, 255, 255), rect, 2)
-            label = self.button_font.render(name, True, (255, 255, 255))
-            screen.blit(label, label.get_rect(center=rect.center))
+            pygame.draw.rect(screen, (60, 60, 60), rect)
+            pygame.draw.rect(screen, (255, 255, 255), rect, 1)
+            text_surface = self.button_font.render(name, True, (255, 255, 255))
+            screen.blit(text_surface, text_surface.get_rect(center=rect.center))
 
+        # Draw preview of selected square if any
+        if self.selected_square:
+            preview_size = 40
+            preview_width = 4 * preview_size
+            preview_x = (self.get_width() - preview_width) // 2
+            preview_y = self.square_buttons[0][1].bottom + 30
+
+            preview_rect = pygame.Rect(preview_x, preview_y, preview_width, preview_width)
+            pygame.draw.rect(screen, (50, 50, 50), preview_rect)
+            pygame.draw.rect(screen, (255, 255, 255), preview_rect, 1)
+
+            square_data = self.square_list[self.selected_square]
+
+            for i in range(4):
+                for j in range(4):
+                    cell_val = square_data[i][j]
+                    color = self.board_ui.get_color_from_board(cell_val // 10)
+                    cell_rect = pygame.Rect(
+                        preview_x + j * preview_size,
+                        preview_y + i * preview_size,
+                        preview_size,
+                        preview_size
+                    )
+                    pygame.draw.rect(screen, color, cell_rect)
+                    pygame.draw.rect(screen, (255, 255, 255), cell_rect, 1)
+
+        # Draw held square next to mouse if any
         if self.holding_square and self.held_square_data:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            square_cell_size = 40
-            offset_x = mouse_x - 2 * square_cell_size
-            offset_y = mouse_y - 2 * square_cell_size
-
-            for row in range(4):
-                for col in range(4):
-                    value = self.held_square_data[row][col]
-                    color = self.board_ui.get_color_from_board(value // 10)
-                    rect = pygame.Rect(
-                        offset_x + col * square_cell_size,
-                        offset_y + row * square_cell_size,
-                        square_cell_size,
-                        square_cell_size
+            preview_size = 30
+            for i in range(4):
+                for j in range(4):
+                    cell_val = self.held_square_data[i][j]
+                    color = self.board_ui.get_color_from_board(cell_val // 10)
+                    cell_rect = pygame.Rect(
+                        mouse_x + j * preview_size,
+                        mouse_y + i * preview_size,
+                        preview_size,
+                        preview_size
                     )
-                    pygame.draw.rect(screen, color, rect)
-                    pygame.draw.rect(screen, (255, 255, 255), rect, 1)
+                    pygame.draw.rect(screen, color, cell_rect)
+                    pygame.draw.rect(screen, (255, 255, 255), cell_rect, 1)
 
-        elif self.selected_square:
-            square = self.square_list[self.selected_square]
-            square_cell_size = 40
-            square_width = 4 * square_cell_size
-            square_offset_x = (self.get_width() - square_width) // 2
-            square_offset_y = self.square_buttons[0][1].bottom + 30
-
-            for row in range(4):
-                for col in range(4):
-                    rect = pygame.Rect(
-                        square_offset_x + col * square_cell_size,
-                        square_offset_y + row * square_cell_size,
-                        square_cell_size,
-                        square_cell_size
-                    )
-                    value = square[row][col]
-                    color = self.board_ui.get_color_from_board(value // 10)
-                    pygame.draw.rect(screen, color, rect)
-                    pygame.draw.rect(screen, (255, 255, 255), rect, 1)
-                    
-        # Instructions (only for local games)
+        # Draw AI toggle checkbox (only in local mode)
         if not self.network_mode:
-            instructions = [
-                "L : rotate left",
-                "R : rotate right",
-                "F : flip side"
-            ]
-
-            for i, text in enumerate(instructions):
-                instruction_surface = self.button_font.render(text, True, (255, 255, 255))
-                screen.blit(instruction_surface, (20, 100 + i * 30))
-        else:
-            # Network mode instructions
-            instructions = [
-                "Select squares and place them on board",
-                "Click 'Confirm Board' when ready",
-                "L/R/F: rotate/flip squares"
-            ]
-            
-            for i, text in enumerate(instructions):
-                instruction_surface = self.button_font.render(text, True, (200, 200, 200))
-                screen.blit(instruction_surface, (20, 100 + i * 30))
-
-if __name__ == "__main__":
-    app = SquareSelectorUi(1)  # Default to local mode
-    app.run()
+            pygame.draw.rect(screen, (255, 255, 255), self.checkbox_rect, 2)
+            if self.__ai:
+                pygame.draw.line(screen, (0, 255, 0), self.checkbox_rect.topleft, self.checkbox_rect.bottomright, 3)
+                pygame.draw.line(screen, (0, 255, 0), self.checkbox_rect.topright, self.checkbox_rect.bottomleft, 3)
+            ai_text = self.button_font.render("Play vs AI", True, (255, 255, 255))
+            screen.blit(ai_text, (self.checkbox_rect.right + 10, self.checkbox_rect.top - 2))

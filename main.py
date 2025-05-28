@@ -58,7 +58,6 @@ class MainMenuUI(BaseUI):
         # Main loop
         while self.running:
             self.handle_events()
-            self.update()
             self.draw()
             pygame.display.flip()
             self.clock.tick(60)
@@ -105,9 +104,6 @@ class MainMenuUI(BaseUI):
                         join_interface.run()
                     except Exception as e:
                         print(f"Erreur lors de la connexion: {e}")
-
-    def update(self):
-        pass
 
     def draw(self):
         # Drawing buttons
