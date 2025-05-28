@@ -6,30 +6,30 @@ import random
 import time
 
 class Isolation(BaseUI):
-    def __init__(self,ai, board, title="Isolation"):
+    def __init__(self, ai, board, title="Isolation"):
         super().__init__(title)
         self.board = board
         self.rules = Moves_rules(board)
         self.board_ui = Board_draw_tools()
-        
+
         self.cell_size = 60
         self.grid_dim = 8
         self.grid_size = self.cell_size * self.grid_dim
-        
+
         self.top_offset = 80
         self.left_offset = (self.get_width() - self.grid_size) // 2
-        
+
         self.title_font = pygame.font.SysFont(None, 48)
         self.title_surface = self.title_font.render("Isolation", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 40))
-        
+
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
-        
+
         self.current_player = 1
         self.total_moves = 0
         self.max_moves = self.grid_dim * self.grid_dim
 
-        self.__AI = ai
+        self.__AI = ai  # AI opponent enabled if True
 
     def run(self):
         self.running = True
@@ -39,6 +39,7 @@ class Isolation(BaseUI):
             pygame.display.flip()
             self.clock.tick(60)
 
+            # If AI is player 2, make AI move after a short delay
             if self.__AI and self.current_player == 2 and self.running:
                 time.sleep(2)
                 self.play_ai_move()
@@ -55,26 +56,30 @@ class Isolation(BaseUI):
 
     def handle_click(self, pos):
         if self.__AI and self.current_player == 2:
-            return
-        
+            return  # Ignore clicks if AI's turn
+
         x, y = pos
         col = (x - self.left_offset) // self.cell_size
         row = (y - self.top_offset) // self.cell_size
 
+        # Check if click is inside the grid
         if 0 <= row < self.grid_dim and 0 <= col < self.grid_dim:
             case = self.board[row][col]
+            # Check if the cell is free and not under threat
             if case % 10 == 0 and not self.in_prise(row, col):
                 color = case // 10
                 self.board[row][col] = color * 10 + self.current_player
                 self.total_moves += 1
+                # Check for game end conditions
                 if self.total_moves >= self.max_moves or not self.can_play():
-                    print(f"Le joueur {self.current_player} gagne !")
+                    print(f"Player {self.current_player} wins!")
                     self.running = False
                 else:
+                    # Switch player
                     self.current_player = 2 if self.current_player == 1 else 1
 
-
     def in_prise(self, x, y):
+        # Check if the move at (x,y) is under attack by any opponent move
         for i in range(self.grid_dim):
             for j in range(self.grid_dim):
                 case = self.board[i][j]
@@ -84,18 +89,20 @@ class Isolation(BaseUI):
         return False
 
     def can_play(self):
+        # Check if current player has any valid moves left
         for i in range(self.grid_dim):
             for j in range(self.grid_dim):
                 case = self.board[i][j]
                 if case not in (0, 50, 60) and case % 10 == 0 and not self.in_prise(i, j):
                     return True
         return False
-    
+
     def draw(self):
         screen = self.get_screen()
         screen.fill((30, 30, 30))
         screen.blit(self.title_surface, self.title_rect)
 
+        # Draw the game board grid and pieces
         for row in range(self.grid_dim):
             for col in range(self.grid_dim):
                 rect = pygame.Rect(
@@ -109,6 +116,7 @@ class Isolation(BaseUI):
                 pygame.draw.rect(screen, color, rect)
                 pygame.draw.rect(screen, (255, 255, 255), rect, 1)
 
+                # Draw player pieces
                 if value % 10 != 0:
                     center = rect.center
                     radius = self.cell_size // 3
@@ -117,13 +125,15 @@ class Isolation(BaseUI):
                     elif value % 10 == 2:
                         pygame.draw.circle(screen, (0, 0, 255), center, radius)
 
+        # Draw back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
-        back_text = pygame.font.SysFont(None, 36).render("Retour", True, (255, 255, 255))
+        back_text = pygame.font.SysFont(None, 36).render("Back", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
 
     def play_ai_move(self):
         possibles = []
+        # Collect all possible moves for AI player
         for i in range(self.grid_dim):
             for j in range(self.grid_dim):
                 case = self.board[i][j]
@@ -131,18 +141,20 @@ class Isolation(BaseUI):
                     possibles.append((i, j))
 
         if not possibles:
-            print("L'IA ne peut plus jouer, joueur 1 gagne !")
+            print("AI can't move, Player 1 wins!")
             self.running = False
             return
 
+        # Randomly pick a valid move
         i, j = random.choice(possibles)
         case = self.board[i][j]
         color = case // 10
         self.board[i][j] = color * 10 + 2
         self.total_moves += 1
 
+        # Check for end of game after AI move
         if self.total_moves >= self.max_moves or not self.can_play():
-            print("L'IA (joueur 2) gagne !")
+            print("AI (Player 2) wins!")
             self.running = False
         else:
             self.current_player = 1
