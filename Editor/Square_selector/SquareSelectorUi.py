@@ -8,7 +8,7 @@ from Game_ui.Congress import Congress
 from Game_ui.Isolation import Isolation
 
 class SquareSelectorUi(BaseUI):
-    def __init__(self,gamemode, title="Select your square"):
+    def __init__(self, gamemode, title="Select your square", network_mode=False):
         super().__init__(title)
 
         self.board_obj = Board()
@@ -16,6 +16,7 @@ class SquareSelectorUi(BaseUI):
         self.board = self.board_obj.get_default_board()
         
         self.gamemode = gamemode
+        self.network_mode = network_mode  # NEW: Network mode flag
 
         self.cell_size = 50
         self.grid_dim = 8
@@ -24,7 +25,13 @@ class SquareSelectorUi(BaseUI):
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
 
-        self.title_surface = self.title_font.render("Square Editor", True, (255, 255, 255))
+        # Update title based on mode
+        if self.network_mode:
+            title_text = "Select Board for Network Game"
+        else:
+            title_text = "Square Editor"
+        
+        self.title_surface = self.title_font.render(title_text, True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 40))
         self.top_offset = self.title_rect.bottom + 20
         self.left_offset = (self.get_width() - self.grid_size) // 2
@@ -41,6 +48,7 @@ class SquareSelectorUi(BaseUI):
         self.holding_square = False 
         self.held_square_data = None
         
+        # AI checkbox only for local games
         self.__ai = False
         self.checkbox_rect = pygame.Rect(20, 220, 20, 20)
         
@@ -50,7 +58,6 @@ class SquareSelectorUi(BaseUI):
                 if cell == 0:
                     return False
         return True
-
 
     def create_square_buttons(self):
         buttons = []
@@ -114,7 +121,7 @@ class SquareSelectorUi(BaseUI):
                 self.selected_square = name
                 self.held_square_data = None
                 self.holding_square = False
-                print(f"Bouton sélectionné : {name}")
+                print(f"Square selected: {name}")
                 return
 
         if self.selected_square:
@@ -127,35 +134,42 @@ class SquareSelectorUi(BaseUI):
             if square_rect.collidepoint(position):
                 self.held_square_data = self.square_list[self.selected_square]
                 self.holding_square = True
-                print(f"Square accroché : {self.selected_square}")
+                print(f"Square attached: {self.selected_square}")
                 return
             
-        if self.checkbox_rect.collidepoint(x, y):
+        # AI checkbox only for local games
+        if not self.network_mode and self.checkbox_rect.collidepoint(x, y):
             self.__ai = not self.__ai
             return
             
-        if self.is_board_filled():
-            print("Lancement de la partie")
-            
-            pre_final_board = self.board_obj.create_final_board(self.board)
-            
-            final_board = self.board_obj.add_border_and_corners(pre_final_board)
-            
-            if self.gamemode == 1:
-                katarenga = Katarenga(self.__ai,final_board)
-                katarenga.run()
-            elif self.gamemode == 2:
-                congress = Congress(self.__ai,final_board)
-                congress.run()
-            elif self.gamemode == 3:
-                isolation = Isolation(self.__ai,pre_final_board)
-                isolation.run()
-        else:
-            print("Le plateau n'est pas encore rempli.")
-            return
-    
-        
-
+        # Start button handling
+        if self.start_button_rect.collidepoint(x, y):
+            if self.is_board_filled():
+                if self.network_mode:
+                    # Network mode: just close and return to host
+                    print("[NETWORK] Board selection completed for network game")
+                    self.running = False
+                    return
+                else:
+                    # Local mode: launch game normally
+                    print("Launching local game")
+                    
+                    pre_final_board = self.board_obj.create_final_board(self.board)
+                    
+                    final_board = self.board_obj.add_border_and_corners(pre_final_board)
+                    
+                    if self.gamemode == 1:
+                        katarenga = Katarenga(self.__ai, final_board)
+                        katarenga.run()
+                    elif self.gamemode == 2:
+                        congress = Congress(self.__ai, final_board)
+                        congress.run()
+                    elif self.gamemode == 3:
+                        isolation = Isolation(self.__ai, pre_final_board)
+                        isolation.run()
+            else:
+                print("Board not completely filled.")
+                return
 
     def is_on_board(self, x, y):
         return (
@@ -167,7 +181,7 @@ class SquareSelectorUi(BaseUI):
         if self.held_square_data is None:
             return
 
-        # Détermine le coin du plateau
+        # Determine board corner
         row = 0 if row < 4 else 4
         col = 0 if col < 4 else 4
 
@@ -175,19 +189,19 @@ class SquareSelectorUi(BaseUI):
             for j in range(4):
                 self.board[row + i][col + j] = self.held_square_data[i][j]
 
-        print(f"Square placé dans le quadrant ({row}, {col})")
+        print(f"Square placed in quadrant ({row}, {col})")
 
     def rotate_square_right(self):
             self.held_square_data = self.board_obj.rotate_right(self.held_square_data)
-            print("Square tourné à droite")
+            print("Square rotated right")
 
     def rotate_square_left(self):
         self.held_square_data = self.board_obj.rotate_left(self.held_square_data)
-        print("Square tourné à droite")
+        print("Square rotated left")
 
     def flip_square(self):
         self.held_square_data = self.board_obj.flip_horizontal(self.held_square_data)
-        print("Square retourné horizontalement")
+        print("Square flipped horizontally")
 
     def draw(self):
         screen = self.get_screen()
@@ -208,7 +222,7 @@ class SquareSelectorUi(BaseUI):
 
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
-        back_text = self.button_font.render("Retour", True, (255, 255, 255))
+        back_text = self.button_font.render("Back", True, (255, 255, 255))
         screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
         
         is_ready = self.is_board_filled()
@@ -217,17 +231,23 @@ class SquareSelectorUi(BaseUI):
         pygame.draw.rect(screen, button_color, self.start_button_rect)
         pygame.draw.rect(screen, (255, 255, 255), self.start_button_rect, 2)
 
-        start_text = self.button_font.render("Lancer la partie", True, (255, 255, 255))
+        # Change button text based on mode
+        if self.network_mode:
+            start_text = self.button_font.render("Confirm Board", True, (255, 255, 255))
+        else:
+            start_text = self.button_font.render("Launch Game", True, (255, 255, 255))
         screen.blit(start_text, start_text.get_rect(center=self.start_button_rect.center))
         
-        pygame.draw.rect(screen, (255, 255, 255), self.checkbox_rect, 2)
-        
-        if self.__ai:
-            pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topleft, self.checkbox_rect.bottomright, 2)
-            pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topright, self.checkbox_rect.bottomleft, 2)
+        # AI checkbox only for local games
+        if not self.network_mode:
+            pygame.draw.rect(screen, (255, 255, 255), self.checkbox_rect, 2)
+            
+            if self.__ai:
+                pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topleft, self.checkbox_rect.bottomright, 2)
+                pygame.draw.line(screen, (255, 255, 255), self.checkbox_rect.topright, self.checkbox_rect.bottomleft, 2)
 
-        label = self.button_font.render("Activate AI", True, (255, 255, 255))
-        screen.blit(label, (self.checkbox_rect.right + 10, self.checkbox_rect.top - 2))
+            label = self.button_font.render("Activate AI", True, (255, 255, 255))
+            screen.blit(label, (self.checkbox_rect.right + 10, self.checkbox_rect.top - 2))
 
         for name, rect in self.square_buttons:
             pygame.draw.rect(screen, (70, 70, 70), rect)
@@ -274,16 +294,29 @@ class SquareSelectorUi(BaseUI):
                     pygame.draw.rect(screen, color, rect)
                     pygame.draw.rect(screen, (255, 255, 255), rect, 1)
                     
-        instructions = [
-            "L : rotate left",
-            "R : rotate right",
-            "F : flip side"
-        ]
+        # Instructions (only for local games)
+        if not self.network_mode:
+            instructions = [
+                "L : rotate left",
+                "R : rotate right",
+                "F : flip side"
+            ]
 
-        for i, text in enumerate(instructions):
-            instruction_surface = self.button_font.render(text, True, (255, 255, 255))
-            screen.blit(instruction_surface, (20, 100 + i * 30))
+            for i, text in enumerate(instructions):
+                instruction_surface = self.button_font.render(text, True, (255, 255, 255))
+                screen.blit(instruction_surface, (20, 100 + i * 30))
+        else:
+            # Network mode instructions
+            instructions = [
+                "Select squares and place them on board",
+                "Click 'Confirm Board' when ready",
+                "L/R/F: rotate/flip squares"
+            ]
+            
+            for i, text in enumerate(instructions):
+                instruction_surface = self.button_font.render(text, True, (200, 200, 200))
+                screen.blit(instruction_surface, (20, 100 + i * 30))
 
 if __name__ == "__main__":
-    app = SquareSelectorUi()
+    app = SquareSelectorUi(1)  # Default to local mode
     app.run()

@@ -3,17 +3,16 @@ from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
 
-
 from Game_ui.Katarenga import Katarenga
 from Game_ui.Congress import Congress
 from Game_ui.Isolation import Isolation
 
 class NetworkGameAdapter(BaseUI):
     
-    def __init__(self, game_session, title="Jeu en réseau"):
+    def __init__(self, game_session, title="Network Game"):
         super().__init__(title)
         
-        # Session network games
+        # Network game session
         self.session = game_session
         self.board = game_session.board
         self.game_type = game_session.game_type
@@ -22,23 +21,24 @@ class NetworkGameAdapter(BaseUI):
         # Create an instance of the game to reuse its methods
         self.game_instance = self._create_game_instance()
         
-        # network game state
+        # Network game state
         self.selected_pawn = None
         self.current_player = 1
         self.game_finished = False
         self.status_message = ""
         self.status_color = (255, 255, 255)
         
-        
+        # Set up callbacks
         self.session.set_game_callbacks(
             board_update=self.on_board_update,
             player_change=self.on_player_change,
             game_end=self.on_game_end
         )
         
-        print(f"[NETWORK] Network game intialize - Type: {self.game_type}, Joueur local: {self.local_player}")
+        print(f"[NETWORK] Network game initialized - Type: {self.game_type}, Local player: {self.local_player}")
     
     def _create_game_instance(self):
+        """Create game instance for UI reuse"""
         ai_disabled = False
         
         if self.game_type == 1:
@@ -48,7 +48,7 @@ class NetworkGameAdapter(BaseUI):
         elif self.game_type == 3:
             return Isolation(ai_disabled, self.board)
         else:
-            raise ValueError(f"Error: {self.game_type}")
+            raise ValueError(f"Unknown game type: {self.game_type}")
     
     def run(self):
         self.session.start_game()
@@ -60,7 +60,7 @@ class NetworkGameAdapter(BaseUI):
             pygame.display.flip()
             self.clock.tick(60)
         
-        print("[NETWORK] Game end")
+        print("[NETWORK] Game ended")
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -70,69 +70,81 @@ class NetworkGameAdapter(BaseUI):
                 self.handle_click(event.pos)
     
     def handle_click(self, pos):
-        # Check who is the current player
+        # Check if it's the player's turn
         if self.current_player != self.local_player:
             self.set_status("It's not your turn", (255, 255, 100))
             return
         
-       
+        # Check if clicking back button (if game instance has one)
+        if hasattr(self.game_instance, 'back_button_rect'):
+            if self.game_instance.back_button_rect.collidepoint(pos):
+                self.running = False
+                return
+        
+        # Handle game-specific clicks
         if self.game_type in [1, 2]:  # Katarenga and Congress
             self._handle_board_click_katarenga_congress(pos)
         elif self.game_type == 3:  # Isolation
             self._handle_click_isolation(pos)
     
     def _handle_board_click_katarenga_congress(self, pos):
+        """Handle board clicks for Katarenga and Congress"""
         row, col = self._get_board_position(pos)
         if row is None or col is None:
             return
-        
         
         cell_value = self.board[row][col]
         player_on_cell = cell_value % 10
         
         if self.selected_pawn is None:
-            # Selec pawn
+            # Select pawn - ONLY allow selecting own pawns
             if player_on_cell == self.local_player:
                 self.selected_pawn = (row, col)
-                self.set_status(f"Pawn select in ({row}, {col})", (100, 255, 100))
+                self.set_status(f"Pawn selected at ({row}, {col})", (100, 255, 100))
+            elif player_on_cell != 0:
+                self.set_status("That's not your pawn!", (255, 100, 100))
             else:
-                self.set_status("elect one of your pawns", (255, 255, 100))
+                self.set_status("Select one of your pawns", (255, 255, 100))
         else:
-            #moovement or deselection
+            # Movement or deselection
             if (row, col) == self.selected_pawn:
                 self.selected_pawn = None
-                self.set_status("Pawn unselect", (200, 200, 200))
+                self.set_status("Pawn deselected", (200, 200, 200))
             elif player_on_cell == self.local_player:
+                # Switch to different own pawn
                 self.selected_pawn = (row, col)
-                self.set_status(f"New pawn selected", (100, 255, 100))
+                self.set_status(f"New pawn selected at ({row}, {col})", (100, 255, 100))
             else:
+                # Try to move to this position
                 from_row, from_col = self.selected_pawn
                 
-                if self._is_valid_move(from_row, from_col, row, col):
-                    if self.session.make_move((from_row, from_col), (row, col)):
-                        self.selected_pawn = None
-                        self.set_status("Move right", (100, 255, 100))
-                    else:
-                        self.set_status("Error network", (255, 100, 100))
+                # Double-check: ensure we're moving OUR pawn
+                if self.board[from_row][from_col] % 10 != self.local_player:
+                    self.set_status("Error: Not your pawn!", (255, 100, 100))
+                    self.selected_pawn = None
+                    return
+                
+                # Attempt to make move through network
+                if self.session.make_move((from_row, from_col), (row, col)):
+                    self.selected_pawn = None
+                    self.set_status("Move successful", (100, 255, 100))
                 else:
-                    self.set_status("Move invalid", (255, 100, 100))
+                    self.set_status("Invalid move", (255, 100, 100))
     
     def _handle_click_isolation(self, pos):
+        """Handle board clicks for Isolation"""
         row, col = self._get_board_position(pos)
         if row is None or col is None:
             return
         
-        case = self.board[row][col]
-        if case % 10 == 0 and not self.game_instance.in_prise(row, col):
-            
-            if self.session.make_move(None, (row, col)):  
-                self.set_status("Case put", (100, 255, 100))
-            else:
-                self.set_status("Error network", (255, 100, 100))
+        # Attempt to place piece through network
+        if self.session.make_move(None, (row, col)):
+            self.set_status("Piece placed", (100, 255, 100))
         else:
-            self.set_status("Case invalid", (255, 100, 100))
+            self.set_status("Invalid placement", (255, 100, 100))
     
     def _get_board_position(self, pos):
+        """Convert mouse position to board coordinates"""
         x, y = pos
         
         if hasattr(self.game_instance, 'left_offset'):
@@ -141,6 +153,7 @@ class NetworkGameAdapter(BaseUI):
             cell_size = self.game_instance.cell_size
             grid_dim = self.game_instance.grid_dim
         else:
+            # Fallback values
             left_offset = (self.get_width() - 600) // 2
             top_offset = 80
             cell_size = 60
@@ -157,70 +170,82 @@ class NetworkGameAdapter(BaseUI):
             return row, col
         return None, None
     
-    def _is_valid_move(self, from_row, from_col, to_row, to_col):
-        
-        if hasattr(self.game_instance, 'is_valid_move'):
-            return self.game_instance.is_valid_move(from_row, from_col, to_row, to_col)
-        else:
-            case_color = self.board[from_row][from_col]
-            return self.game_instance.moves_rules.verify_move(case_color, from_row, from_col, to_row, to_col)
-    
     def on_board_update(self, new_board):
+        """Called when board is updated via network"""
         self.board = new_board
-        self.game_instance.board = new_board  # Synchro the board with the game instance
+        self.game_instance.board = new_board  # Sync with game instance
         print("[NETWORK] Board updated")
     
     def on_player_change(self, new_player):
+        """Called when player turn changes"""
         self.current_player = new_player
         if new_player == self.local_player:
             self.set_status("Your turn", (100, 255, 100))
         else:
-            self.set_status("Opponent turn", (255, 255, 100))
+            self.set_status("Opponent's turn", (255, 255, 100))
     
     def on_game_end(self, winner):
+        """Called when game ends"""
         self.game_finished = True
-        if winner == "Déconnexion":
+        if winner == "Disconnection":
             self.set_status("Opponent disconnected", (255, 100, 100))
         elif winner == self.local_player:
             self.set_status("You win!", (100, 255, 100))
         else:
             self.set_status("You lose", (255, 100, 100))
+        
+        print(f"[NETWORK] Game ended - Winner: {winner}")
     
     def set_status(self, message, color):
+        """Set status message and color"""
         self.status_message = message
         self.status_color = color
     
     def update(self):
+        """Update game state"""
         if hasattr(self.game_instance, 'update'):
             self.game_instance.update()
     
     def draw(self):
+        """Draw the game"""
         screen = self.get_screen()
         
         if hasattr(self.game_instance, 'draw'):
-            original_screen = self.game_instance.get_screen()
-            original_selected = getattr(self.game_instance, 'selected_pawn', None)
-            original_current = getattr(self.game_instance, 'current_player', None)
-            
-            self.game_instance._BaseUI__screen = screen  
-            if hasattr(self.game_instance, 'selected_pawn'):
-                self.game_instance.selected_pawn = self.selected_pawn
-            if hasattr(self.game_instance, 'current_player'):
-                self.game_instance.current_player = self.current_player
-            
-            self.game_instance.draw()
-            
-            self.game_instance._BaseUI__screen = original_screen
-            if hasattr(self.game_instance, 'selected_pawn'):
-                self.game_instance.selected_pawn = original_selected
-            if hasattr(self.game_instance, 'current_player'):
-                self.game_instance.current_player = original_current
+            # Use the original game's draw method with modifications
+            self._draw_using_game_instance(screen)
         else:
-            self._draw_basic()
+            # Fallback drawing
+            self._draw_basic(screen)
         
+        # Draw network-specific information
         self._draw_network_info(screen)
     
+    def _draw_using_game_instance(self, screen):
+        """Use original game instance's draw method"""
+        # Temporarily modify game instance state
+        original_screen = self.game_instance.get_screen()
+        original_selected = getattr(self.game_instance, 'selected_pawn', None)
+        original_current = getattr(self.game_instance, 'current_player', None)
+        
+        # Set our values
+        self.game_instance._BaseUI__screen = screen
+        if hasattr(self.game_instance, 'selected_pawn'):
+            self.game_instance.selected_pawn = self.selected_pawn
+        if hasattr(self.game_instance, 'current_player'):
+            self.game_instance.current_player = self.current_player
+        
+        # Draw
+        self.game_instance.draw()
+        
+        # Restore original values
+        self.game_instance._BaseUI__screen = original_screen
+        if hasattr(self.game_instance, 'selected_pawn'):
+            self.game_instance.selected_pawn = original_selected
+        if hasattr(self.game_instance, 'current_player'):
+            self.game_instance.current_player = original_current
+    
     def _draw_basic(self):
+        """Basic fallback drawing"""
         screen = self.get_screen()
         screen.fill((30, 30, 30))
         
@@ -240,20 +265,56 @@ class NetworkGameAdapter(BaseUI):
                 pygame.draw.rect(screen, color, rect)
                 pygame.draw.rect(screen, (255, 255, 255), rect, 1)
                 
-                # Pawns
+                # Draw pawns
                 if value % 10 > 0:
                     center = rect.center
                     pawn_color = (0, 0, 255) if value % 10 == 1 else (255, 0, 0)
                     pygame.draw.circle(screen, pawn_color, center, 20)
     
     def _draw_network_info(self, screen):
+        """Draw network-specific information"""
+        # Status message
         if self.status_message:
             status_surface = pygame.font.SysFont(None, 28).render(
-                f"[RÉSEAU] {self.status_message}", True, self.status_color
+                f"[NETWORK] {self.status_message}", True, self.status_color
             )
             screen.blit(status_surface, (20, self.get_height() - 60))
         
+        # Player information
         player_info = f"You: Player {self.local_player}"
         player_color = (0, 0, 255) if self.local_player == 1 else (255, 0, 0)
         player_surface = pygame.font.SysFont(None, 24).render(player_info, True, player_color)
         screen.blit(player_surface, (20, self.get_height() - 30))
+        
+        # Game type and turn indicator
+        game_names = {1: "Katarenga", 2: "Congress", 3: "Isolation"}
+        game_info = f"Game: {game_names.get(self.game_type, 'Unknown')}"
+        info_surface = pygame.font.SysFont(None, 24).render(game_info, True, (255, 255, 255))
+        screen.blit(info_surface, (20, 20))
+        
+        # Connection status
+        if self.session.game_started:
+            connection_text = "Connected - Game Active"
+            connection_color = (100, 255, 100)
+        else:
+            connection_text = "Waiting for game start..."
+            connection_color = (255, 255, 100)
+        
+        connection_surface = pygame.font.SysFont(None, 20).render(connection_text, True, connection_color)
+        screen.blit(connection_surface, (20, 45))
+    
+    def get_game_statistics(self):
+        """Get current game statistics (useful for debugging/info)"""
+        if self.session.board:
+            return self.session.get_game_info()
+        return None
+    
+    def get_valid_moves(self):
+        """Get valid moves for current player"""
+        return self.session.get_valid_moves()
+    
+    def can_make_move(self):
+        """Check if local player can make a move"""
+        return (self.current_player == self.local_player and 
+                self.session.game_started and 
+                not self.game_finished)

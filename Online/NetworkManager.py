@@ -19,7 +19,7 @@ class NetworkManager:
         self.message_callback = message_callback
         self.disconnect_callback = disconnect_callback
     
-    #FONCTIONS SERVEUR 
+    # SERVER FUNCTIONS
     def start_server(self, port=5000):
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,14 +30,14 @@ class NetworkManager:
             self.is_host = True
             self.is_connected = True
             
-            # launch a thread to accept clients
+            # Launch thread to accept clients
             threading.Thread(target=self._accept_clients, daemon=True).start()
             
-            print(f"[SERVER] Server start on port :  {port}")
+            print(f"[SERVER] Server started on port: {port}")
             return True
             
         except Exception as e:
-            print(f"[ERROR] Impossible to start the server: {e}")
+            print(f"[ERROR] Unable to start server: {e}")
             return False
     
     def _accept_clients(self):
@@ -47,12 +47,12 @@ class NetworkManager:
                 self.clients.append(client_socket)
                 print(f"[SERVER] Client connected: {client_address}")
                 
-                # Launch a thread to listen to this client
+                # Launch thread to listen to this client
                 threading.Thread(target=self._listen_client, args=(client_socket,), daemon=True).start()
                 
             except Exception as e:
                 if self.is_connected:
-                    print(f"[ERROR] Error whil accepting client: {e}")
+                    print(f"[ERROR] Error accepting client: {e}")
                 break
     
     def _listen_client(self, client_socket):
@@ -67,7 +67,7 @@ class NetworkManager:
                     break
                     
             except Exception as e:
-                print(f"[ERROR] Error of reception: {e}")
+                print(f"[ERROR] Reception error: {e}")
                 break
         
         # Client disconnected
@@ -78,7 +78,7 @@ class NetworkManager:
         if self.disconnect_callback:
             self.disconnect_callback()
     
-    #FONCTIONS CLIENT
+    # CLIENT FUNCTIONS
     def connect_to_server(self, host_ip, port=5000):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -87,14 +87,14 @@ class NetworkManager:
             self.is_host = False
             self.is_connected = True
             
-            # Launch a thread to listen to the server
+            # Launch thread to listen to server
             threading.Thread(target=self._listen_server, daemon=True).start()
             
             print(f"[CLIENT] Connected to server {host_ip}:{port}")
             return True
             
         except Exception as e:
-            print(f"[ERROR] Impossible to be connected: {e}")
+            print(f"[ERROR] Unable to connect: {e}")
             return False
     
     def _listen_server(self):
@@ -109,7 +109,7 @@ class NetworkManager:
                     break
                     
             except Exception as e:
-                print(f"[ERROR] Error of reception: {e}")
+                print(f"[ERROR] Reception error: {e}")
                 break
         
         # Server disconnected
@@ -117,7 +117,6 @@ class NetworkManager:
         if self.disconnect_callback:
             self.disconnect_callback()
     
-
     def send_message(self, message):
         if not self.is_connected:
             return False
@@ -133,7 +132,7 @@ class NetworkManager:
             return True
             
         except Exception as e:
-            print(f"[ERROR] Error send: {e}")
+            print(f"[ERROR] Send error: {e}")
             return False
     
     def disconnect(self):
@@ -151,7 +150,7 @@ class NetworkManager:
             client.close()
         self.clients.clear()
         
-        print("[NETWORK] Déconnecté")
+        print("[NETWORK] Disconnected")
     
     def get_local_ip(self):
         try:
