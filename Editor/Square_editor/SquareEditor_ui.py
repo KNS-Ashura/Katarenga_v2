@@ -18,24 +18,30 @@ class SquareEditorUi(BaseUI):
 
         screen_width = self.get_width()
 
+        # Title setup
         self.title_font = pygame.font.SysFont(None, 48)
         self.title_surface = self.title_font.render("Square Editor", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(screen_width // 2, 30))
 
+        # Position offsets
         self.top_offset = self.title_rect.bottom + 40
         self.left_offset = (screen_width - self.grid_size) // 2
 
         self.button_font = pygame.font.SysFont(None, 36)
 
+        # Back button rect
         self.back_button_rect = pygame.Rect(20, 20, 120, 40)
 
+        # Text input box rect
         self.text_input_rect = pygame.Rect(self.left_offset, self.top_offset + self.grid_size + 20, self.grid_size, 40)
         self.text_input = ""
         self.text_active = False
 
+        # Save button rect
         self.save_button_rect = pygame.Rect(self.left_offset, self.text_input_rect.bottom + 10, self.grid_size, 40)
 
     def run(self):
+        # Main loop
         while self.running:
             self.handle_events()
             self.draw()
@@ -43,6 +49,7 @@ class SquareEditorUi(BaseUI):
             self.clock.tick(60)
 
     def handle_events(self):
+        # Handle events (quit, keypress, mouse click)
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.running = False
@@ -60,13 +67,15 @@ class SquareEditorUi(BaseUI):
     def handle_click(self, position):
         x, y = position
 
+        # Back button clicked: exit
         if self.back_button_rect.collidepoint(x, y):
             self.running = False
             return
 
+        # Save button clicked: validate and save
         if self.save_button_rect.collidepoint(x, y):
             if self.text_input.strip() == "":
-                print("Erreur : Un texte doit être saisi avant la sauvegarde.")
+                print("Error: You must enter a name before saving.")
                 return
 
             if all(cell != 0 for row in self.square for cell in row):
@@ -77,30 +86,39 @@ class SquareEditorUi(BaseUI):
                 self.board_obj.save_to_file(filename)
                 self.running = False
             else:
-                print("Erreur : Toutes les cases doivent être non nulles (différentes de 0)")
+                print("Error: All cells must be non-zero before saving.")
 
+        # Ignore clicks outside grid area
         if y < self.top_offset or x < self.left_offset:
             return
 
+        # Calculate clicked cell in grid
         col = (x - self.left_offset) // self.cell_size
         row = (y - self.top_offset) // self.cell_size
 
+        # If click is inside the 4x4 grid
         if 0 <= row < 4 and 0 <= col < 4:
             value = self.square[row][col]
             color_code = value // 10
             print(f"Clicked cell ({row}, {col}): Value {value}, Color {color_code}")
+
+            # Cycle color code (1 to 4)
             new_color_code = (color_code % 4) + 1
             self.square[row][col] = new_color_code * 10 + (value % 10)
             print(f"Updated board: {self.square}")
 
+        # Activate text input if clicked inside input box
         if self.text_input_rect.collidepoint(x, y):
             self.text_active = True
 
     def draw(self):
-        self.get_screen().fill((30, 30, 30))
+        screen = self.get_screen()
+        screen.fill((30, 30, 30))
 
-        self.get_screen().blit(self.title_surface, self.title_rect)
+        # Draw title
+        screen.blit(self.title_surface, self.title_rect)
 
+        # Draw 4x4 grid of squares
         for row in range(4):
             for col in range(4):
                 rect = pygame.Rect(
@@ -109,27 +127,29 @@ class SquareEditorUi(BaseUI):
                     self.cell_size,
                     self.cell_size
                 )
-
                 color = self.board_ui.get_color_from_board(self.square[row][col] // 10)
-                pygame.draw.rect(self.get_screen(), color, rect)
-                pygame.draw.rect(self.get_screen(), (255, 255, 255), rect, 1)
+                pygame.draw.rect(screen, color, rect)
+                pygame.draw.rect(screen, (255, 255, 255), rect, 1)
 
-        pygame.draw.rect(self.get_screen(), (70, 70, 70), self.back_button_rect)
-        pygame.draw.rect(self.get_screen(), (255, 255, 255), self.back_button_rect, 2)
+        # Draw back button
+        pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
+        pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
         back_text = self.button_font.render("Retour", True, (255, 255, 255))
-        self.get_screen().blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
+        screen.blit(back_text, back_text.get_rect(center=self.back_button_rect.center))
 
-        pygame.draw.rect(self.get_screen(), (70, 70, 70), self.save_button_rect)
-        pygame.draw.rect(self.get_screen(), (255, 255, 255), self.save_button_rect, 2)
+        # Draw save button
+        pygame.draw.rect(screen, (70, 70, 70), self.save_button_rect)
+        pygame.draw.rect(screen, (255, 255, 255), self.save_button_rect, 2)
         save_text = self.button_font.render("Sauvegarder", True, (255, 255, 255))
-        self.get_screen().blit(save_text, save_text.get_rect(center=self.save_button_rect.center))
+        screen.blit(save_text, save_text.get_rect(center=self.save_button_rect.center))
 
-        pygame.draw.rect(self.get_screen(), (255, 255, 255), self.text_input_rect, 2)
+        # Draw text input box and current text
+        pygame.draw.rect(screen, (255, 255, 255), self.text_input_rect, 2)
         text_surface = pygame.font.SysFont(None, 36).render(self.text_input, True, (255, 255, 255))
-        self.get_screen().blit(text_surface, (self.text_input_rect.x + 5, self.text_input_rect.y + 5))
+        screen.blit(text_surface, (self.text_input_rect.x + 5, self.text_input_rect.y + 5))
 
 
 if __name__ == "__main__":
     board = Board()
-    app = SquareEditorUi(board)
+    app = SquareEditorUi()
     app.run()

@@ -2,7 +2,6 @@ import json
 import os
 
 class Board:
-    
     #in the following list:
     #the number 1 = blue
     #the number 2 = green
@@ -28,10 +27,9 @@ class Board:
     #exemple:
     #a corner with no pawn = 50
     #a corner with a pawn of player 1 = 51
-               
-    def __init__(self):
 
-        self.__square_list = {
+    def __init__(self):
+        self._square_list = {
             "default1": [
                 [40, 10, 10, 40],
                 [10, 10, 40, 30],
@@ -59,124 +57,109 @@ class Board:
         }
 
         self.final_board = None
-
-        self.__default_board = [[0 for _ in range(8)] for _ in range(8)]
-
-        self.__default_square = [[0 for _ in range(4)] for _ in range(4)]
-
-        self.__corners = [0 for _ in range(4)]
-
+        self._default_board = [[0]*8 for _ in range(8)]  # 8x8 empty board
+        self._default_square = [[0]*4 for _ in range(4)]  # 4x4 empty square
+        self._corners = [0]*4  # corners list
 
     def save_to_file(self, filename: str):
-        existing_data = {}
-
+        # Save squares to JSON file, merge if file exists
+        data = {}
         if os.path.exists(filename) and os.path.getsize(filename) > 0:
             try:
-                with open(filename, "r") as f:
-                    existing_data = json.load(f)
+                with open(filename, 'r') as f:
+                    data = json.load(f)
             except json.JSONDecodeError:
-                print(f"Le fichier '{filename}' existe mais n'est pas un JSON valide. Il sera remplacé.")
-                existing_data = {}
+                print(f"File '{filename}' exists but is invalid JSON, overwriting.")
 
-        if "square" not in existing_data:
-            existing_data["square"] = {}
+        if "square" not in data:
+            data["square"] = {}
 
-        existing_data["square"].update(self.__square_list)
+        data["square"].update(self._square_list)
 
-        with open(filename, "w") as f:
-            json.dump(existing_data, f, indent=4)
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        print(f"Data saved to '{filename}' without overwriting other keys.")
 
-        print(f"Données sauvegardées (sans écrasement) dans '{filename}'.")
-        
     def save_to_file_manager(self, filename: str):
-        data_to_save = {
-            "square": self.__square_list
-        }
-
-        with open(filename, "w") as f:
-            json.dump(data_to_save, f, indent=4)
-
-        print(f"Données sauvegardées dans '{filename}'.")
+        # Save only squares, overwrite file
+        with open(filename, 'w') as f:
+            json.dump({"square": self._square_list}, f, indent=4)
+        print(f"Data saved to '{filename}'.")
 
     def check_or_create_file(self, filename: str):
+        # Create file if missing, check if empty
         if not os.path.exists(filename):
-            with open(filename, "w") as f:
-                f.write("")
-            print(f"Fichier '{filename}' créé car il n'existait pas.")
+            with open(filename, 'w') as f:
+                f.write('')
+            print(f"File '{filename}' created.")
             return False
-
         if os.path.getsize(filename) == 0:
-            print(f"Le fichier '{filename}' est vide.")
+            print(f"File '{filename}' is empty.")
             return False
-        else:
-            print(f"Le fichier '{filename}' existe déjà et contient des données.")
-            return True
-        
+        print(f"File '{filename}' exists and contains data.")
+        return True
+
     def load_from_file(self, filename: str):
+        # Load squares and boards from file
         if not self.check_or_create_file(filename):
             return
 
-        with open(filename, "r") as f:
-            try:
+        try:
+            with open(filename, 'r') as f:
                 data = json.load(f)
-                self.__square_list = {k: v for k, v in data.get("square", {}).items()}
-                self.__board_list = {k: v for k, v in data.get("board", {}).items()}
-                print(f"Données chargées depuis '{filename}'.")
-            except json.JSONDecodeError:
-                print(f"Erreur de lecture : le fichier '{filename}' n'est pas un JSON valide.")
-                
+            self._square_list = {k:v for k,v in data.get("square", {}).items()}
+            self._board_list = {k:v for k,v in data.get("board", {}).items()}
+            print(f"Data loaded from '{filename}'.")
+        except json.JSONDecodeError:
+            print(f"Failed to read '{filename}': invalid JSON.")
+
     def create_final_board(self, matrix_8x8):
+        # Set final board from 8x8 matrix copy
         if len(matrix_8x8) != 8 or any(len(row) != 8 for row in matrix_8x8):
-            raise ValueError("Le tableau doit être une matrice 8x8.")
-
+            raise ValueError("Board must be 8x8 matrix.")
         self.final_board = [row[:] for row in matrix_8x8]
-        
         return [row[:] for row in matrix_8x8]
-    
-    def add_border_and_corners(self,board):
+
+    def add_border_and_corners(self, board):
+        # Add zero border and corners to board
         cols = len(board[0])
-
         new_board = [[0] + row + [0] for row in board]
-
-        zero_row = [0] * (cols + 2)
+        zero_row = [0]*(cols+2)
         new_board.insert(0, zero_row[:])
         new_board.append(zero_row[:])
 
-        new_board[0][0] = 50               
-        new_board[0][-1] = 50              
-        new_board[-1][0] = 60              
-        new_board[-1][-1] = 60             
+        # Set corners (values 50 and 60 to mark corners)
+        new_board[0][0] = 50
+        new_board[0][-1] = 50
+        new_board[-1][0] = 60
+        new_board[-1][-1] = 60
 
         return new_board
 
     def get_default_board(self):
-        return self.__default_board
-    
+        return self._default_board
+
     def get_default_square(self):
-        return self.__default_square
-    
-    def set_square_list(self, clef: str, valeur: list):
-        if isinstance(clef, str) and isinstance(valeur, list):
-            self.__square_list[clef] = valeur
+        return self._default_square
+
+    def set_square_list(self, key: str, value: list):
+        # Set a square pattern by key
+        if isinstance(key, str) and isinstance(value, list):
+            self._square_list[key] = value
         else:
-            print("Erreur : La clé doit être une chaîne de caractères et la valeur une liste.")
+            print("Error: key must be str and value must be list.")
 
     def get_square_list(self):
-        return self.__square_list
-    
+        return self._square_list
+
     def rotate_right(self, board):
+        # Rotate board 90° clockwise
         return [list(reversed(col)) for col in zip(*board)]
-    
+
     def rotate_left(self, board):
+        # Rotate board 90° counter-clockwise
         return [list(col) for col in zip(*board)][::-1]
-    
+
     def flip_horizontal(self, board):
+        # Flip board horizontally
         return [row[::-1] for row in board]
-    
-
-
-
-
-   
-
-    
