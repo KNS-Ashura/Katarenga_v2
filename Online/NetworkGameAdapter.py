@@ -205,8 +205,7 @@ class NetworkGameAdapter(BaseUI):
         
         print(f"Game ended - Winner: {winner}")
         
-        # Show win screen after a short delay
-        pygame.time.wait(2000)  # Wait 2 seconds to show the result
+        # Show win screen immediately for both players
         try:
             win_screen = WinScreen(winner_name)
         except Exception as e:

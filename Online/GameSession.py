@@ -175,7 +175,7 @@ class GameSession:
             
             elif msg_type == 'GAME_END':
                 winner = data['winner']
-                self._end_game(winner)
+                self._end_game_received(winner)
             
             elif msg_type == 'CHAT':
                 message_text = data['message']
@@ -233,12 +233,12 @@ class GameSession:
     def _end_game(self, winner):
         self.game_finished = True
         
-        if self.is_host and winner != "Disconnection":
-            message = {
-                'type': 'GAME_END',
-                'winner': winner
-            }
-            self.network.send_message(json.dumps(message))
+        # Send game end message to opponent (both host and client)
+        message = {
+            'type': 'GAME_END',
+            'winner': winner
+        }
+        self.network.send_message(json.dumps(message))
         
         if self.on_game_end:
             self.on_game_end(winner)
@@ -273,6 +273,13 @@ class GameSession:
                 self.board, self.moves_rules, self.game_type, self.current_player
             )
         return []
+    
+    def _end_game_received(self, winner):
+        """Handle game end message received from opponent"""
+        self.game_finished = True
+        
+        if self.on_game_end:
+            self.on_game_end(winner)
     
     def _basic_validate_move(self, from_pos, to_pos):#get move validation in message when NetworkGameLogic is not working correctly
         if not self.moves_rules or not self.board:
