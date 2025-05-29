@@ -21,9 +21,25 @@ class SquareSelectorUi(BaseUI):
         self.cell_size = 50
         self.grid_dim = 8
         self.grid_size = self.cell_size * self.grid_dim
+        self.board_width = self.grid_size
 
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
+
+        # Position where selected square is displayed
+        self.square_display_pos = (self.get_width() // 2 - 2 * self.cell_size, 240)
+
+        # Board reference coordinates for placing control buttons
+        self.board_x = self.square_display_pos[0]
+        self.board_y = self.square_display_pos[1]
+
+        self.transform_button_size = 60
+        x = self.board_x + self.board_width + 40
+        y = self.board_y
+
+        self.rotate_right_button = pygame.Rect(x, y, self.transform_button_size, self.transform_button_size)
+        self.rotate_left_button = pygame.Rect(x, y + 80, self.transform_button_size, self.transform_button_size)
+        self.flip_button = pygame.Rect(x, y + 160, self.transform_button_size, self.transform_button_size)
 
         # Set title depending on mode
         if self.network_mode:
@@ -177,6 +193,18 @@ class SquareSelectorUi(BaseUI):
             else:
                 print("Board not completely filled.")
                 return
+            
+        if self.rotate_right_button.collidepoint(position) and self.held_square_data != None:
+            self.rotate_square_right()
+            return
+
+        if self.rotate_left_button.collidepoint(position) and self.held_square_data != None:
+            self.rotate_square_left()
+            return
+
+        if self.flip_button.collidepoint(position) and self.held_square_data != None :
+            self.flip_square()
+            return
 
     def is_on_board(self, x, y):
         # Check if pixel (x,y) is within board grid area
@@ -232,6 +260,13 @@ class SquareSelectorUi(BaseUI):
                 color = self.board_ui.get_color_from_board(self.board[row][col] // 10)
                 pygame.draw.rect(screen, color, rect)
                 pygame.draw.rect(screen, (255, 255, 255), rect, 1)
+
+        # Draw shrortcuts text
+        font = pygame.font.SysFont(None, 24)
+        shortcuts = ["R : rotate right", "L : rotate left", "F : flip side"]
+        for idx, text in enumerate(shortcuts):
+            txt = font.render(text, True, (255, 255, 255))
+            screen.blit(txt, (10, 100 + idx * 40))
 
         # Draw back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
@@ -310,3 +345,20 @@ class SquareSelectorUi(BaseUI):
                 pygame.draw.line(screen, (0, 255, 0), self.checkbox_rect.topright, self.checkbox_rect.bottomleft, 3)
             ai_text = self.button_font.render("Play vs AI", True, (255, 255, 255))
             screen.blit(ai_text, (self.checkbox_rect.right + 10, self.checkbox_rect.top - 2))
+
+        #pygame.draw.rect(screen, (70, 70, 70), self.rotate_right_button)
+        pygame.draw.rect(screen, (70, 70, 70), self.rotate_left_button)
+        pygame.draw.rect(screen, (70, 70, 70), self.flip_button)
+
+        pygame.draw.rect(screen, (255, 255, 255), self.rotate_right_button, 2)
+        pygame.draw.rect(screen, (255, 255, 255), self.rotate_left_button, 2)
+        pygame.draw.rect(screen, (255, 255, 255), self.flip_button, 2)
+
+        font = pygame.font.SysFont(None, 24)
+        label_r = font.render("R", True, (255, 255, 255))
+        label_l = font.render("L", True, (255, 255, 255))
+        label_f = font.render("F", True, (255, 255, 255))
+
+        screen.blit(label_r, label_r.get_rect(center=self.rotate_right_button.center))
+        screen.blit(label_l, label_l.get_rect(center=self.rotate_left_button.center))
+        screen.blit(label_f, label_f.get_rect(center=self.flip_button.center))

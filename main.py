@@ -81,7 +81,7 @@ class MainMenuUI(BaseUI):
             if button["rect"].collidepoint(position):
                 label = button["label"]
                 print(f"Launching {label}...")
-                
+
                 if label == "Katarenga":
                     self.launch_square_selector(1)
                 elif label == "Congress":
@@ -96,12 +96,12 @@ class MainMenuUI(BaseUI):
                     self.launch_host_interface()
                 elif label == "Join a game":
                     self.launch_join_interface()
-    
+
     def launch_square_selector(self, gamemode):
-        """✅ Lancer le sélecteur de plateau en mode intégré"""
+        """✅ Launch square selector in integrated mode"""
         try:
             selector = SquareSelectorUi(gamemode)
-            # Intégrer dans notre boucle principale
+            # Integrated into our main loop
             while selector.running and self.running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -120,16 +120,16 @@ class MainMenuUI(BaseUI):
                             selector.rotate_square_left()
                         elif event.key == pygame.K_f:
                             selector.flip_square()
-                
+
                 selector.draw()
                 pygame.display.flip()
                 selector.clock.tick(60)
-                
+
         except Exception as e:
-            print(f"Erreur lors du lancement du sélecteur: {e}")
-    
+            print(f"Error launching selector: {e}")
+
     def launch_editor_menu(self):
-        """✅ Lancer le menu éditeur en mode intégré"""
+        """✅ Launch board editor menu in integrated mode"""
         try:
             editor = EditorMenu()
             while editor.running and self.running:
@@ -143,16 +143,16 @@ class MainMenuUI(BaseUI):
                         break
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         editor.handle_click(event.pos)
-                
+
                 editor.draw()
                 pygame.display.flip()
                 editor.clock.tick(60)
-                
+
         except Exception as e:
-            print(f"Erreur lors du lancement de l'éditeur: {e}")
-    
+            print(f"Error launching editor: {e}")
+
     def launch_host_interface(self):
-        """✅ Lancer l'interface host en mode intégré"""
+        """✅ Launch host interface in integrated mode"""
         try:
             host_interface = HostUI()
             while host_interface.running and self.running:
@@ -166,17 +166,17 @@ class MainMenuUI(BaseUI):
                         break
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         host_interface.handle_click(event.pos)
-                
+
                 host_interface.update()
                 host_interface.draw()
                 pygame.display.flip()
                 host_interface.clock.tick(60)
-                
+
         except Exception as e:
-            print(f"Erreur lors du lancement de l'hôte: {e}")
-    
+            print(f"Error launching host interface: {e}")
+
     def launch_join_interface(self):
-        """✅ Lancer l'interface join en mode intégré"""
+        """✅ Launch join interface in integrated mode"""
         try:
             join_interface = JoinUI()
             while join_interface.running and self.running:
@@ -193,14 +193,14 @@ class MainMenuUI(BaseUI):
                             join_interface.handle_text_input(event)
                     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         join_interface.handle_click(event.pos)
-                
+
                 join_interface.update()
                 join_interface.draw()
                 pygame.display.flip()
                 join_interface.clock.tick(60)
-                
+
         except Exception as e:
-            print(f"Erreur lors de la connexion: {e}")
+            print(f"Error during join interface: {e}")
 
     def draw(self):
         # Drawing buttons
