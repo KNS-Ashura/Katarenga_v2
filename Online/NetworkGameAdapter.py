@@ -1,3 +1,4 @@
+# Online/NetworkGameAdapter.py - Corrections
 import pygame
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
@@ -28,6 +29,11 @@ class NetworkGameAdapter(BaseUI):
         self.status_message = ""
         self.status_color = (255, 255, 255)
         
+        # ✅ Variables pour gérer la fin de partie
+        self.winner = None
+        self.end_game_timer = 0
+        self.show_end_screen = False
+        
         # Set up callbacks
         self.session.set_game_callbacks(
             board_update=self.on_board_update,
@@ -35,10 +41,9 @@ class NetworkGameAdapter(BaseUI):
             game_end=self.on_game_end
         )
         
-        #print(f"Network game initialized - Type: {self.game_type}, Local player: {self.local_player}")
+        print(f"Network game initialized - Type: {self.game_type}, Local player: {self.local_player}")
     
     def _create_game_instance(self):
-       
         ai_disabled = False
         
         if self.game_type == 1:
@@ -53,21 +58,35 @@ class NetworkGameAdapter(BaseUI):
     def run(self):
         self.session.start_game()
         
-        while self.running and not self.game_finished:
+        while self.running:
             self.handle_events()
             self.update()
             self.draw()
             pygame.display.flip()
             self.clock.tick(60)
+            
+            # ✅ Auto-fermeture après fin de partie (optionnel)
+            if self.game_finished and self.show_end_screen:
+                self.end_game_timer += self.clock.get_time()
+                if self.end_game_timer > 5000:  # 5 secondes
+                    print("Auto-closing game after 5 seconds...")
+                    self.running = False
         
-        #print("Game ended")
+        print("Game adapter ended")
     
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self.handle_click(event.pos)
+                # ✅ Permettre de fermer en cliquant si le jeu est terminé
+                if self.game_finished and self.show_end_screen:
+                    self.running = False
+                else:
+                    self.handle_click(event.pos)
+            # ✅ Permettre de fermer avec n'importe quelle touche si le jeu est terminé
+            elif event.type == pygame.KEYDOWN and self.game_finished and self.show_end_screen:
+                self.running = False
     
     def handle_click(self, pos):
         # Check if it's the player's turn
@@ -88,7 +107,6 @@ class NetworkGameAdapter(BaseUI):
             self._handle_click_isolation(pos)
     
     def _handle_board_click_katarenga_congress(self, pos):
-        
         row, col = self._get_board_position(pos)
         if row is None or col is None:
             return
@@ -97,7 +115,7 @@ class NetworkGameAdapter(BaseUI):
         player_on_cell = cell_value % 10
         
         if self.selected_pawn is None:
-            # Selection for pans but only selecting own pawns
+            # Selection for pawns but only selecting own pawns
             if player_on_cell == self.local_player:
                 self.selected_pawn = (row, col)
                 self.set_status(f"Pawn selected at ({row}, {col})", (100, 255, 100))
@@ -132,7 +150,6 @@ class NetworkGameAdapter(BaseUI):
                     self.set_status("Invalid move", (255, 100, 100))
     
     def _handle_click_isolation(self, pos):
-        
         row, col = self._get_board_position(pos)
         if row is None or col is None:
             return
@@ -144,7 +161,6 @@ class NetworkGameAdapter(BaseUI):
             self.set_status("Invalid placement", (255, 100, 100))
     
     def _get_board_position(self, pos):
-        
         x, y = pos
         
         if hasattr(self.game_instance, 'left_offset'):
@@ -171,13 +187,11 @@ class NetworkGameAdapter(BaseUI):
         return None, None
     
     def on_board_update(self, new_board):
-        
         self.board = new_board
         self.game_instance.board = new_board  # Sync with game instance
         print("Board updated")
     
     def on_player_change(self, new_player):
-        
         self.current_player = new_player
         if new_player == self.local_player:
             self.set_status("Your turn", (100, 255, 100))
@@ -185,29 +199,29 @@ class NetworkGameAdapter(BaseUI):
             self.set_status("Opponent's turn", (255, 255, 100))
     
     def on_game_end(self, winner):
-        
         self.game_finished = True
+        self.winner = winner
+        self.show_end_screen = True
+        self.end_game_timer = 0  # ✅ Reset timer
+        
         if winner == "Disconnection":
-            self.set_status("Opponent disconnected", (255, 100, 100))
+            self.set_status("Opponent disconnected - Click or press any key to exit", (255, 100, 100))
         elif winner == self.local_player:
-            self.set_status("You win!", (100, 255, 100))
+            self.set_status("You win! - Click or press any key to exit", (100, 255, 100))
         else:
-            self.set_status("You lose", (255, 100, 100))
+            self.set_status("You lose - Click or press any key to exit", (255, 100, 100))
         
         print(f"Game ended - Winner: {winner}")
     
     def set_status(self, message, color):
-        
         self.status_message = message
         self.status_color = color
     
     def update(self):
-        
         if hasattr(self.game_instance, 'update'):
             self.game_instance.update()
     
     def draw(self):
-        
         screen = self.get_screen()
         
         if hasattr(self.game_instance, 'draw'):
@@ -219,9 +233,12 @@ class NetworkGameAdapter(BaseUI):
         
         # Draw network information
         self._draw_network_info(screen)
+        
+        # ✅ Affichage spécial pour la fin de partie
+        if self.game_finished and self.show_end_screen:
+            self._draw_end_game_overlay(screen)
     
     def _draw_using_game_instance(self, screen):
-        
         # Temporarily modify game instance state
         original_screen = self.game_instance.get_screen()
         original_selected = getattr(self.game_instance, 'selected_pawn', None)
@@ -244,8 +261,7 @@ class NetworkGameAdapter(BaseUI):
         if hasattr(self.game_instance, 'current_player'):
             self.game_instance.current_player = original_current
     
-    def _draw_basic(self):
-        
+    def _draw_basic(self, screen):
         screen = self.get_screen()
         screen.fill((30, 30, 30))
         
@@ -279,23 +295,61 @@ class NetworkGameAdapter(BaseUI):
             screen.blit(status_surface, (20, self.get_height() - 60))
         
         # Player information
-        player_info = f"You are : Player {self.local_player}"
+        player_info = f"You are: Player {self.local_player}"
         player_color = (0, 0, 255) if self.local_player == 1 else (255, 0, 0)
         player_surface = pygame.font.SysFont(None, 24).render(player_info, True, player_color)
         screen.blit(player_surface, (20, self.get_height() - 30))
     
-    def get_game_statistics(self):
+    def _draw_end_game_overlay(self, screen):
+        """✅ Affichage d'un overlay pour la fin de partie"""
+        # Semi-transparent overlay
+        overlay = pygame.Surface((self.get_width(), self.get_height()))
+        overlay.set_alpha(128)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
         
+        # Winner message
+        if self.winner == "Disconnection":
+            main_text = "Game Ended"
+            sub_text = "Opponent disconnected"
+            color = (255, 100, 100)
+        elif self.winner == self.local_player:
+            main_text = "VICTORY!"
+            sub_text = "You won the game!"
+            color = (100, 255, 100)
+        else:
+            main_text = "DEFEAT"
+            sub_text = "You lost the game"
+            color = (255, 100, 100)
+        
+        # Draw main text
+        main_font = pygame.font.SysFont(None, 72)
+        main_surface = main_font.render(main_text, True, color)
+        main_rect = main_surface.get_rect(center=(self.get_width() // 2, self.get_height() // 2 - 50))
+        screen.blit(main_surface, main_rect)
+        
+        # Draw sub text
+        sub_font = pygame.font.SysFont(None, 36)
+        sub_surface = sub_font.render(sub_text, True, (255, 255, 255))
+        sub_rect = sub_surface.get_rect(center=(self.get_width() // 2, self.get_height() // 2))
+        screen.blit(sub_surface, sub_rect)
+        
+        # Draw exit instruction
+        exit_text = "Click anywhere or press any key to exit"
+        exit_font = pygame.font.SysFont(None, 24)
+        exit_surface = exit_font.render(exit_text, True, (200, 200, 200))
+        exit_rect = exit_surface.get_rect(center=(self.get_width() // 2, self.get_height() // 2 + 50))
+        screen.blit(exit_surface, exit_rect)
+    
+    def get_game_statistics(self):
         if self.session.board:
             return self.session.get_game_info()
         return None
     
     def get_valid_moves(self):
-        
         return self.session.get_valid_moves()
     
     def can_make_move(self):
-       
         return (self.current_player == self.local_player and 
                 self.session.game_started and 
                 not self.game_finished)

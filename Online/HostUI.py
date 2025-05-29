@@ -1,3 +1,4 @@
+# Online/HostUI.py - Corrections
 import pygame
 from UI_tools.BaseUi import BaseUI
 from Online.NetworkManager import NetworkManager
@@ -6,8 +7,8 @@ from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Online.NetworkGameAdapter import NetworkGameAdapter
 import copy
 import time
-class HostUI(BaseUI):
 
+class HostUI(BaseUI):
     def __init__(self, title="Host Game"):
         super().__init__(title)
         
@@ -19,6 +20,7 @@ class HostUI(BaseUI):
         self.client_connected = False
         self.waiting_for_client = False
         self.board_selected = False
+        self.game_launched = False  # ✅ Ajout d'un flag pour éviter les double-lancements
         
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
@@ -54,10 +56,7 @@ class HostUI(BaseUI):
                 'rect': rect
             })
         
-        # Button for starting the server
         self.start_server_button = pygame.Rect(center_x, start_y + len(games) * (button_height + spacing) + 50, button_width, button_height)
-        
-        # Button for board selection (visible only when client is connected)
         self.select_board_button = pygame.Rect(center_x, start_y + len(games) * (button_height + spacing) + 130, button_width, button_height)
         
         self.info_y = self.get_height() - 200
@@ -70,6 +69,7 @@ class HostUI(BaseUI):
             pygame.display.flip()
             self.clock.tick(60)
         
+        # ✅ Nettoyage approprié lors de la fermeture
         if self.network:
             self.network.disconnect()
     
@@ -87,19 +87,16 @@ class HostUI(BaseUI):
             return
         
         if not self.server_started:
-            # Game selection
             for button in self.game_buttons:
                 if button['rect'].collidepoint(pos):
                     self.selected_game = button['game_id']
                     print(f"Game selected: {button['name']}")
                     return
             
-            # Start server
             if self.start_server_button.collidepoint(pos) and self.selected_game:
                 self.start_server()
         
-        elif self.client_connected and not self.board_selected:
-            # Board selection
+        elif self.client_connected and not self.board_selected and not self.game_launched:
             if self.select_board_button.collidepoint(pos):
                 self.launch_board_selection()
     
@@ -113,21 +110,18 @@ class HostUI(BaseUI):
                 disconnect_callback=self.handle_client_disconnect
             )
             
-            #print(f"Server launched - IP: {self.network.get_local_ip()}")
+            print(f"Server launched - IP: {self.network.get_local_ip()}")
         else:
-            pass
-            #print("Unable to start server")
+            print("Unable to start server")
     
     def handle_network_message(self, message):
-        #print(f"Message received: {message}")
+        print(f"Message received: {message}")
         
-        # First message = client connected
         if not self.client_connected:
             self.client_connected = True
             self.waiting_for_client = False
-            #print("Client connected!")
+            print("Client connected!")
             
-            # Send confirmation to client
             if hasattr(self, 'network') and self.network:
                 self.network.send_message("HOST_READY")
     
@@ -135,80 +129,76 @@ class HostUI(BaseUI):
         self.client_connected = False
         self.waiting_for_client = True
         self.board_selected = False
-        #print("Client disconnected, waiting for new client...")
+        self.game_launched = False  # ✅ Reset du flag de jeu
+        print("Client disconnected, waiting for new client...")
     
     def launch_board_selection(self):
-        #print(f"Launching board selection for game type {self.selected_game}")
+        if self.game_launched:  # ✅ Éviter les double-lancements
+            return
+            
+        print(f"Launching board selection for game type {self.selected_game}")
         
-        # Create game session
         self.session = GameSession(self.selected_game, self.network)
         
-        # Launch board selection in NETWORK MODE
         selector = SquareSelectorUi(self.selected_game, network_mode=True)
         selector.run()
         
-        # Get the created board
         if hasattr(selector, 'board') and selector.is_board_filled():
             self.board_selected = True
-            #print("Board selection completed successfully")
+            print("Board selection completed successfully")
             
-            # Prepare board according to game type
+            # Préparer le plateau selon le type de jeu
             if self.selected_game == 1:  # Katarenga
                 pre_final_board = selector.board_obj.create_final_board(selector.board)
                 final_board = selector.board_obj.add_border_and_corners(pre_final_board)
-                # Place pawns for Katarenga
                 final_board = self._place_pawns_katarenga(final_board)
                 
             elif self.selected_game == 2:  # Congress
                 pre_final_board = selector.board_obj.create_final_board(selector.board)
                 final_board = selector.board_obj.add_border_and_corners(pre_final_board)
-                # Place pawns for Congress
                 final_board = self._place_pawns_congress(final_board)
                 
             elif self.selected_game == 3:  # Isolation
                 final_board = selector.board_obj.create_final_board(selector.board)
-                # No pawn placement require for Isolation
             
-            #print(f"Sending board to client - Game type: {self.selected_game}")
+            print(f"Sending board to client - Game type: {self.selected_game}")
             
-            # Send board to client
             self.session.set_board(final_board)
-            
-            # Wait a moment for board to be sent
-            
             time.sleep(0.5)
             
-            #print("Starting game...")
-            # Launch network game
+            print("Starting game...")
             self.launch_network_game()
         else:
-            #print("Board selection error, please try again")
+            print("Board selection error, please try again")
             self.board_selected = False
     
     def launch_network_game(self):
-        
-        #print("Launching network game...")
+        if self.game_launched:  # ✅ Éviter les double-lancements
+            return
+            
+        print("Launching network game...")
         
         if self.session and self.board_selected:
-            # Create and launch network game adapter
+            self.game_launched = True  # ✅ Marquer le jeu comme lancé
+            
+            # ✅ Lancer le jeu en réseau sans fermer l'interface host
             network_game = NetworkGameAdapter(self.session)
             network_game.run()
             
-            # Close host interface once game is finished
-            self.running = False
+            # ✅ Une fois le jeu terminé, revenir à l'état d'attente
+            print("Network game ended, returning to host interface")
+            self.game_launched = False
+            self.board_selected = False
+            # Ne pas fermer l'interface, permettre à l'host de relancer une partie
     
     def _place_pawns_katarenga(self, board):
-        
-        
         new_board = copy.deepcopy(board)
         
-        # First row, columns 1 to 8 (top of the board) - Player 2
         for col in range(1, 9):
             if col < len(new_board[0]):
                 color = new_board[1][col] // 10
                 new_board[1][col] = color * 10 + 2  # Player 2
         
-        # Last row, columns 1 to 8 - Player 1
         for col in range(1, 9):
             if col < len(new_board[0]) and len(new_board) > 8:
                 color = new_board[8][col] // 10
@@ -217,11 +207,9 @@ class HostUI(BaseUI):
         return new_board
     
     def _place_pawns_congress(self, board):
-        
         new_board = copy.deepcopy(board)
         grid_dim = len(new_board)
         
-        # Clean board first
         for i in range(grid_dim):
             for j in range(grid_dim):
                 color_code = new_board[i][j] // 10
@@ -257,7 +245,8 @@ class HostUI(BaseUI):
         
         return new_board
     
-    
+    def update(self):
+        pass
     
     def draw(self):
         screen = self.get_screen()
@@ -279,7 +268,6 @@ class HostUI(BaseUI):
         for button in self.game_buttons:
             color = button['color']
             if self.selected_game == button['game_id']:
-                # Highlight selected game
                 pygame.draw.rect(screen, (255, 255, 255), button['rect'], 3)
             
             pygame.draw.rect(screen, color, button['rect'])
@@ -288,7 +276,6 @@ class HostUI(BaseUI):
             text = self.button_font.render(button['name'], True, (255, 255, 255))
             screen.blit(text, text.get_rect(center=button['rect'].center))
         
-        # Button for starting the server
         button_color = (100, 255, 100) if self.selected_game else (100, 100, 100)
         pygame.draw.rect(screen, button_color, self.start_server_button)
         pygame.draw.rect(screen, (255, 255, 255), self.start_server_button, 2)
@@ -296,47 +283,45 @@ class HostUI(BaseUI):
         start_text = self.button_font.render("Start Server", True, (255, 255, 255))
         screen.blit(start_text, start_text.get_rect(center=self.start_server_button.center))
         
-        # Instructions
         if not self.selected_game:
             instruction = "Select a game to host and click 'Start Server'"
         else:
-            instruction = print(f"Game selected: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}")
+            game_name = [b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]
+            instruction = f"Game selected: {game_name}"
         
         inst_surface = self.info_font.render(instruction, True, (200, 200, 200))
         screen.blit(inst_surface, (50, self.info_y))
     
-    def update(self):
-        pass
     def draw_server_status(self, screen):
         status = self.network.get_status()
         
-        # Server information
         info_texts = [
             f"Server running on: {status['local_ip']}:5000",
             f"Connected clients: {status['clients_count']}/1"
         ]
         
-        if self.waiting_for_client:
+        if self.game_launched:
+            info_texts.append("Game in progress...")
+            status_color = (100, 255, 100)
+        elif self.waiting_for_client:
             info_texts.append("Waiting for client to connect...")
             status_color = (255, 255, 100)
         elif self.client_connected and not self.board_selected:
             info_texts.append("Player connected - Ready to select board")
             status_color = (100, 255, 100)
             
-            # Display board selection button
             pygame.draw.rect(screen, (100, 255, 100), self.select_board_button)
             pygame.draw.rect(screen, (255, 255, 255), self.select_board_button, 2)
             board_text = self.button_font.render("Select Board", True, (255, 255, 255))
             screen.blit(board_text, board_text.get_rect(center=self.select_board_button.center))
             
         elif self.board_selected:
-            info_texts.append("Game in progress...")
+            info_texts.append("Ready to start game!")
             status_color = (100, 255, 100)
         else:
             info_texts.append("No client connected")
             status_color = (255, 100, 100)
         
-        # Print information texts
         for i, text in enumerate(info_texts):
             color = status_color if i == len(info_texts) - 1 else (255, 255, 255)
             surface = self.info_font.render(text, True, color)
