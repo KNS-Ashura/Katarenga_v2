@@ -112,20 +112,14 @@ class HostUI(BaseUI):
                 message_callback=self.handle_network_message,
                 disconnect_callback=self.handle_client_disconnect
             )
-            
-            #print(f"Server launched - IP: {self.network.get_local_ip()}")
         else:
             pass
-            #print("Unable to start server")
     
     def handle_network_message(self, message):
-        #print(f"Message received: {message}")
-        
         # First message = client connected
         if not self.client_connected:
             self.client_connected = True
             self.waiting_for_client = False
-            #print("Client connected!")
             
             # Send confirmation to client
             if hasattr(self, 'network') and self.network:
@@ -135,11 +129,8 @@ class HostUI(BaseUI):
         self.client_connected = False
         self.waiting_for_client = True
         self.board_selected = False
-        #print("Client disconnected, waiting for new client...")
     
     def launch_board_selection(self):
-        #print(f"Launching board selection for game type {self.selected_game}")
-        
         # Create game session
         self.session = GameSession(self.selected_game, self.network)
         
@@ -150,7 +141,6 @@ class HostUI(BaseUI):
         # Get the created board
         if hasattr(selector, 'board') and selector.is_board_filled():
             self.board_selected = True
-            #print("Board selection completed successfully")
             
             # Prepare board according to game type
             if self.selected_game == 1:  # Katarenga
@@ -169,37 +159,27 @@ class HostUI(BaseUI):
                 final_board = selector.board_obj.create_final_board(selector.board)
                 # No pawn placement require for Isolation
             
-            #print(f"Sending board to client - Game type: {self.selected_game}")
-            
             # Send board to client
             self.session.set_board(final_board)
             
             # Wait a moment for board to be sent
-            
             time.sleep(0.5)
             
-            #print("Starting game...")
             # Launch network game
             self.launch_network_game()
         else:
-            #print("Board selection error, please try again")
             self.board_selected = False
     
     def launch_network_game(self):
-        
-        #print("Launching network game...")
-        
         if self.session and self.board_selected:
+            # Close host interface BEFORE launching game
+            self.running = False
+            
             # Create and launch network game adapter
             network_game = NetworkGameAdapter(self.session)
             network_game.run()
-            
-            # Close host interface once game is finished
-            self.running = False
     
     def _place_pawns_katarenga(self, board):
-        
-        
         new_board = copy.deepcopy(board)
         
         # First row, columns 1 to 8 (top of the board) - Player 2
@@ -217,7 +197,6 @@ class HostUI(BaseUI):
         return new_board
     
     def _place_pawns_congress(self, board):
-        
         new_board = copy.deepcopy(board)
         grid_dim = len(new_board)
         
@@ -256,8 +235,6 @@ class HostUI(BaseUI):
                     new_board[r2][c2] = code * 10 + 1  # Player 1
         
         return new_board
-    
-    
     
     def draw(self):
         screen = self.get_screen()
@@ -300,10 +277,13 @@ class HostUI(BaseUI):
         if not self.selected_game:
             instruction = "Select a game to host and click 'Start Server'"
         else:
-            instruction = print(f"Game selected: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}")
+            instruction = f"Game selected: {[b['name'] for b in self.game_buttons if b['game_id'] == self.selected_game][0]}"
         
         inst_surface = self.info_font.render(instruction, True, (200, 200, 200))
         screen.blit(inst_surface, (50, self.info_y))
+    
+    def update(self):
+        pass
     
     def draw_server_status(self, screen):
         status = self.network.get_status()

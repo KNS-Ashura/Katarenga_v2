@@ -83,27 +83,124 @@ class MainMenuUI(BaseUI):
                 print(f"Launching {label}...")
                 
                 if label == "Katarenga":
-                    SquareSelectorUi(1).run()
+                    self.launch_square_selector(1)
                 elif label == "Congress":
-                    SquareSelectorUi(2).run()
+                    self.launch_square_selector(2)
                 elif label == "Isolation":
-                    SquareSelectorUi(3).run()
+                    self.launch_square_selector(3)
                 elif label == "Board Editor":
-                    EditorMenu().run()
+                    self.launch_editor_menu()
                 elif label == "Leave Game":
                     self.running = False
                 elif label == "Host a game":
-                    try:
-                        host_interface = HostUI()
-                        host_interface.run()
-                    except Exception as e:
-                        print(f"Erreur lors du lancement de l'hôte: {e}")
+                    self.launch_host_interface()
                 elif label == "Join a game":
-                    try:
-                        join_interface = JoinUI()
-                        join_interface.run()
-                    except Exception as e:
-                        print(f"Erreur lors de la connexion: {e}")
+                    self.launch_join_interface()
+    
+    def launch_square_selector(self, gamemode):
+        """✅ Lancer le sélecteur de plateau en mode intégré"""
+        try:
+            selector = SquareSelectorUi(gamemode)
+            # Intégrer dans notre boucle principale
+            while selector.running and self.running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        selector.running = False
+                        self.running = False
+                        break
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        selector.running = False
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        selector.handle_click(event.pos)
+                    elif event.type == pygame.KEYDOWN and selector.holding_square:
+                        if event.key == pygame.K_r:
+                            selector.rotate_square_right()
+                        elif event.key == pygame.K_l:
+                            selector.rotate_square_left()
+                        elif event.key == pygame.K_f:
+                            selector.flip_square()
+                
+                selector.draw()
+                pygame.display.flip()
+                selector.clock.tick(60)
+                
+        except Exception as e:
+            print(f"Erreur lors du lancement du sélecteur: {e}")
+    
+    def launch_editor_menu(self):
+        """✅ Lancer le menu éditeur en mode intégré"""
+        try:
+            editor = EditorMenu()
+            while editor.running and self.running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        editor.running = False
+                        self.running = False
+                        break
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        editor.running = False
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        editor.handle_click(event.pos)
+                
+                editor.draw()
+                pygame.display.flip()
+                editor.clock.tick(60)
+                
+        except Exception as e:
+            print(f"Erreur lors du lancement de l'éditeur: {e}")
+    
+    def launch_host_interface(self):
+        """✅ Lancer l'interface host en mode intégré"""
+        try:
+            host_interface = HostUI()
+            while host_interface.running and self.running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        host_interface.running = False
+                        self.running = False
+                        break
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        host_interface.running = False
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        host_interface.handle_click(event.pos)
+                
+                host_interface.update()
+                host_interface.draw()
+                pygame.display.flip()
+                host_interface.clock.tick(60)
+                
+        except Exception as e:
+            print(f"Erreur lors du lancement de l'hôte: {e}")
+    
+    def launch_join_interface(self):
+        """✅ Lancer l'interface join en mode intégré"""
+        try:
+            join_interface = JoinUI()
+            while join_interface.running and self.running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        join_interface.running = False
+                        self.running = False
+                        break
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            join_interface.running = False
+                            break
+                        elif join_interface.ip_active:
+                            join_interface.handle_text_input(event)
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        join_interface.handle_click(event.pos)
+                
+                join_interface.update()
+                join_interface.draw()
+                pygame.display.flip()
+                join_interface.clock.tick(60)
+                
+        except Exception as e:
+            print(f"Erreur lors de la connexion: {e}")
 
     def draw(self):
         # Drawing buttons

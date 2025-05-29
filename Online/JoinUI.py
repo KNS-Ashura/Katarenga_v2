@@ -132,8 +132,6 @@ class JoinUI(BaseUI):
             self.set_status("Unable to connect", (255, 100, 100))
     
     def handle_network_message(self, message):
-        #print(f"Message received: {message}")
-        
         try:
             import json
             data = json.loads(message)
@@ -144,18 +142,15 @@ class JoinUI(BaseUI):
                 self.session = GameSession(data['game_type'], self.network)
                 self.session.set_board(data['board'])
                 self.set_status("Board received! Ready to play", (100, 255, 100))
-                #print(f"Board received for game type {data['game_type']}")
             
             elif data.get('type') == 'GAME_START':
                 self.game_started = True
                 self.set_status("Game started!", (100, 255, 100))
-                #print("Game started by host")
                 # Auto-launch game when host starts
                 if self.board_received:
                     self.launch_network_game()
 
         except json.JSONDecodeError:
-            #print(f"Received non-JSON message: {message}")
             if "READY" in message.upper() or "CLIENT_READY" in message:
                 self.set_status("Server ready", (100, 255, 100))
     
@@ -167,21 +162,17 @@ class JoinUI(BaseUI):
         self.set_status("Server disconnected", (255, 100, 100))
     
     def launch_network_game(self):
-        
-        #print("Launching network game...")
-        
         if self.session and self.board_received:
+            # Close join interface BEFORE launching game
+            self.running = False
+            
             # Create and launch network game adapter
             network_game = NetworkGameAdapter(self.session)
             network_game.run()
-            
-            # Close join interface once game is finished
-            self.running = False
     
     def set_status(self, message, color):
         self.status_message = message
         self.status_color = color
-        #print(f"{message}")
     
     def update(self):
         self.cursor_timer += self.clock.get_time()
