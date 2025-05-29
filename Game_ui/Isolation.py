@@ -1,9 +1,11 @@
-from Game_ui.move_rules import Moves_rules
+
 import pygame
-from UI_tools.BaseUi import BaseUI
-from Board.Board_draw_tools import Board_draw_tools
 import random
 import time
+from UI_tools.BaseUi import BaseUI
+from Board.Board_draw_tools import Board_draw_tools
+from Game_ui.move_rules import Moves_rules
+from UI_tools.win_screen import WinScreen
 
 class Isolation(BaseUI):
     def __init__(self, ai, board, title="Isolation"):
@@ -142,19 +144,27 @@ class Isolation(BaseUI):
 
         if not possibles:
             print("AI can't move, Player 1 wins!")
+            try:
+                WinScreen("Player 1")
+            except Exception as e:
+                print(f"Error showing win screen: {e}")
             self.running = False
             return
 
-        # Randomly pick a valid move
+        # Random pick valid move
         i, j = random.choice(possibles)
         case = self.board[i][j]
         color = case // 10
         self.board[i][j] = color * 10 + 2
         self.total_moves += 1
 
-        # Check for end of game after AI move
+        
         if self.total_moves >= self.max_moves or not self.can_play():
             print("AI (Player 2) wins!")
+            try:
+                WinScreen("Player 2 (AI)")
+            except Exception as e:
+                print(f"Error showing win screen: {e}")
             self.running = False
         else:
             self.current_player = 1

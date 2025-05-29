@@ -2,6 +2,7 @@ import pygame
 import copy
 import time
 import random
+from UI_tools.win_screen import WinScreen
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
@@ -147,10 +148,18 @@ class Katarenga(BaseUI):
         if player1_count == 0:
             print("Player 2 wins by elimination!")
             self.running = False
+            try:
+                WinScreen("Player 2")
+            except Exception as e:
+                print(f"Error showing win screen: {e}")
             return 2
         if player2_count == 0:
             print("Player 1 wins by elimination!")
             self.running = False
+            try:
+                WinScreen("Player 1")
+            except Exception as e:
+                print(f"Error showing win screen: {e}")
             return 1
         
         # Victory by corners
@@ -158,11 +167,19 @@ class Katarenga(BaseUI):
             if self.board[9][0] % 10 == 1 and self.board[9][9] % 10 == 1:
                 print("Player 1 wins by corner occupation!")
                 self.running = False
+                try:
+                    WinScreen("Player 1")
+                except Exception as e:
+                    print(f"Error showing win screen: {e}")
                 return 1
             
             if self.board[0][0] % 10 == 2 and self.board[0][9] % 10 == 2:
                 print("Player 2 wins by corner occupation!")
                 self.running = False
+                try:
+                    WinScreen("Player 2")
+                except Exception as e:
+                    print(f"Error showing win screen: {e}")
                 return 2
         
         return 0  # No victory

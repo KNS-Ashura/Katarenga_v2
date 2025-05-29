@@ -6,6 +6,7 @@ import random
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
+from UI_tools.win_screen import WinScreen
 
 class Congress(BaseUI):
     def __init__(self, ai, board, title="Congress"):
@@ -142,6 +143,10 @@ class Congress(BaseUI):
                     self.selected_pawn = None
                     if self.check_victory(self.current_player):
                         print(f"Player {self.current_player} wins!")
+                        try:
+                            WinScreen(f"Player {self.current_player}")
+                        except Exception as e:
+                            print(f"Error showing win screen: {e}")
                         self.running = False
                     else:
                         self.switch_player()
@@ -245,6 +250,10 @@ class Congress(BaseUI):
                         self.make_move(r, c, nr, nc)
                         if self.check_victory(2):
                             print("AI wins!")
+                            try:
+                                WinScreen("Player 2 (AI)")
+                            except Exception as e:
+                                print(f"Error showing win screen: {e}")
                             self.running = False
                         else:
                             self.switch_player()
