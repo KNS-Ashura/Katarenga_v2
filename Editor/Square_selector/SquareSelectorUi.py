@@ -169,7 +169,7 @@ class SquareSelectorUi(BaseUI):
                         katarenga = Katarenga(self.__ai, final_board)
                         katarenga.run()
                     elif self.gamemode == 2:
-                        congress = Congress(self.__ai, final_board)
+                        congress = Congress(self.__ai, pre_final_board)
                         congress.run()
                     elif self.gamemode == 3:
                         isolation = Isolation(self.__ai, pre_final_board)

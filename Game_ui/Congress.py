@@ -19,7 +19,7 @@ class Congress(BaseUI):
 
         # Board and UI dimensions
         self.cell_size = 60
-        self.grid_dim = 10
+        self.grid_dim = 8
         self.grid_size = self.cell_size * self.grid_dim
         self.top_offset = 80
         self.left_offset = (self.get_width() - self.grid_size) // 2
@@ -53,33 +53,17 @@ class Congress(BaseUI):
                 color_code = new_board[i][j] // 10
                 new_board[i][j] = color_code * 10  # Clear pawns, keep base color
 
-        # Initial pawn positions for black and white players
-        blacks = [(0,1), (0,5), (1,9), (4,0), (5,9), (8,0), (9,4), (9,8)]
-        whites = [(0,4), (0,8), (1,0), (4,9), (5,0), (8,9), (9,1), (9,5)]
+        # Direct placement of pawns
+        black_pawns = [(0, 1), (0, 4), (1, 7), (3, 0), (4, 7), (6, 0), (7, 3), (7, 6)]
+        white_pawns = [(0, 3), (0, 6), (1, 0), (3, 7), (4, 0), (6, 7), (7, 1), (7, 4)]
 
-        def shift(r, c):
-            if r < 5 and c < 5:
-                r2, c2 = r + 1, c + 1
-            elif r < 5 and c >= 5:
-                r2, c2 = r + 1, c - 1
-            elif r >= 5 and c < 5:
-                r2, c2 = r - 1, c + 1
-            else:
-                r2, c2 = r - 1, c - 1
-            # Clamp coordinates inside board limits
-            return max(0, min(9, r2)), max(0, min(9, c2))
+        for r, c in black_pawns:
+            color = new_board[r][c] // 10
+            new_board[r][c] = color * 10 + 2
 
-        # Place black pawns with player code 2
-        for r, c in blacks:
-            r2, c2 = shift(r, c)
-            code = new_board[r2][c2] // 10
-            new_board[r2][c2] = code * 10 + 2
-
-        # Place white pawns with player code 1
-        for r, c in whites:
-            r2, c2 = shift(r, c)
-            code = new_board[r2][c2] // 10
-            new_board[r2][c2] = code * 10 + 1
+        for r, c in white_pawns:
+            color = new_board[r][c] // 10
+            new_board[r][c] = color * 10 + 1
 
         return new_board
 

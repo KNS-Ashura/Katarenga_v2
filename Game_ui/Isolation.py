@@ -98,9 +98,12 @@ class Isolation(BaseUI):
         return False
 
     def draw(self):
+        #Draw the full game screen: background, board grid, pawns, UI elements.
         screen = self.get_screen()
-        screen.fill((30, 30, 30))
-        screen.blit(self.title_surface, self.title_rect)
+        # Draw background
+        screen.blit(self.get_background(), (0, 0))
+        # Draw title
+        screen.blit(self.title_surface, self.title_rect)  # draw title
 
         # Draw the game board grid and pieces
         for row in range(self.grid_dim):
