@@ -1,4 +1,3 @@
-# Online/JoinUI.py - Corrections
 import pygame
 import threading
 from UI_tools.BaseUi import BaseUI
@@ -18,7 +17,7 @@ class JoinUI(BaseUI):
         self.connecting = False
         self.board_received = False
         self.game_started = False
-        self.game_launched = False  # ✅ Ajout d'un flag pour éviter les double-lancements
+        self.game_launched = False
         
         self.ip_text = "127.0.0.1"
         self.ip_active = False
@@ -58,7 +57,6 @@ class JoinUI(BaseUI):
             pygame.display.flip()
             self.clock.tick(60)
         
-        # ✅ Nettoyage approprié lors de la fermeture
         if self.network:
             self.network.disconnect()
     
@@ -84,7 +82,6 @@ class JoinUI(BaseUI):
             if self.connect_button.collidepoint(pos) and not self.connecting and not self.connected:
                 self.attempt_connection()
         
-        # ✅ Amélioration de la gestion du bouton de lancement
         elif self.board_received and self.start_game_button.collidepoint(pos) and not self.game_launched:
             self.launch_network_game()
     
@@ -143,7 +140,6 @@ class JoinUI(BaseUI):
                 self.game_started = True
                 self.set_status("Game started!", (100, 255, 100))
                 print("Game started by host")
-                # ✅ Lancement automatique du jeu quand l'host démarre
                 if self.board_received and not self.game_launched:
                     self.launch_network_game()
 
@@ -157,28 +153,54 @@ class JoinUI(BaseUI):
         self.connecting = False
         self.board_received = False
         self.game_started = False
-        self.game_launched = False  # ✅ Reset du flag de jeu
+        self.game_launched = False
         self.set_status("Server disconnected", (255, 100, 100))
     
     def launch_network_game(self):
-        if self.game_launched:  # ✅ Éviter les double-lancements
+        if self.game_launched:
             return
             
         print("Launching network game...")
         
         if self.session and self.board_received:
-            self.game_launched = True  # ✅ Marquer le jeu comme lancé
+            self.game_launched = True
             
-            # ✅ Lancer le jeu en réseau sans fermer l'interface join
+            # ✅ CORRECTION : Intégrer le jeu dans notre boucle au lieu d'appeler run()
             network_game = NetworkGameAdapter(self.session)
-            network_game.run()
+            network_game.session.start_game()
             
-            # ✅ Une fois le jeu terminé, revenir à l'état d'attente
+            # ✅ Boucle de jeu intégrée
+            while network_game.running and self.running and not network_game.game_finished:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                        network_game.running = False
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        # Si le jeu est fini et qu'on clique, fermer le jeu
+                        if network_game.game_finished and network_game.show_end_screen:
+                            network_game.running = False
+                            break
+                        else:
+                            network_game.handle_click(event.pos)
+                    elif event.type == pygame.KEYDOWN and network_game.game_finished and network_game.show_end_screen:
+                        network_game.running = False
+                        break
+                
+                network_game.update()
+                network_game.draw()
+                pygame.display.flip()
+                network_game.clock.tick(60)
+                
+                # Gestion de la fin automatique après 5 secondes
+                if network_game.game_finished and network_game.show_end_screen:
+                    network_game.end_game_timer += network_game.clock.get_time()
+                    if network_game.end_game_timer > 5000:
+                        network_game.running = False
+            
             print("Network game ended, returning to join interface")
             self.game_launched = False
             self.board_received = False
             self.game_started = False
-            # Rester connecté pour permettre une nouvelle partie
     
     def set_status(self, message, color):
         self.status_message = message
@@ -274,11 +296,10 @@ class JoinUI(BaseUI):
             surface = self.info_font.render(text, True, color)
             screen.blit(surface, (50, start_y + i * 30))
         
-        
         if self.board_received and not self.game_launched:
             button_color = (100, 255, 100)
             button_text = "Join Game"
-            instruction = "Click to start game."
+            instruction = "Board ready! Click to start game."
         elif self.game_launched:
             button_color = (100, 100, 100)
             button_text = "Game Running"

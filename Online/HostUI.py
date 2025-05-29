@@ -1,4 +1,3 @@
-# Online/HostUI.py - Corrections
 import pygame
 from UI_tools.BaseUi import BaseUI
 from Online.NetworkManager import NetworkManager
@@ -20,7 +19,7 @@ class HostUI(BaseUI):
         self.client_connected = False
         self.waiting_for_client = False
         self.board_selected = False
-        self.game_launched = False  # ✅ Ajout d'un flag pour éviter les double-lancements
+        self.game_launched = False
         
         self.title_font = pygame.font.SysFont(None, 48)
         self.button_font = pygame.font.SysFont(None, 36)
@@ -69,7 +68,6 @@ class HostUI(BaseUI):
             pygame.display.flip()
             self.clock.tick(60)
         
-        # ✅ Nettoyage approprié lors de la fermeture
         if self.network:
             self.network.disconnect()
     
@@ -129,20 +127,45 @@ class HostUI(BaseUI):
         self.client_connected = False
         self.waiting_for_client = True
         self.board_selected = False
-        self.game_launched = False  # ✅ Reset du flag de jeu
+        self.game_launched = False
         print("Client disconnected, waiting for new client...")
     
     def launch_board_selection(self):
-        if self.game_launched:  # ✅ Éviter les double-lancements
+        if self.game_launched:
             return
             
         print(f"Launching board selection for game type {self.selected_game}")
         
         self.session = GameSession(self.selected_game, self.network)
         
+        # ✅ CORRECTION : Ne pas appeler run() directement
+        # Créer le selector mais le gérer dans notre propre boucle
         selector = SquareSelectorUi(self.selected_game, network_mode=True)
-        selector.run()
         
+        # ✅ Boucle de sélection de plateau intégrée
+        selector_running = True
+        while selector_running and self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                    selector_running = False
+                    break
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    selector.handle_click(event.pos)
+                elif event.type == pygame.KEYDOWN:
+                    if hasattr(selector, 'handle_events'):
+                        # Passer l'event au selector s'il a une méthode handle_events
+                        pass
+            
+            # Vérifier si le selector veut se fermer
+            if not selector.running:
+                selector_running = False
+            
+            # Dessiner le selector
+            selector.draw()
+            pygame.display.flip()
+            selector.clock.tick(60)
+        
+        # ✅ Vérifier si la sélection est complète
         if hasattr(selector, 'board') and selector.is_board_filled():
             self.board_selected = True
             print("Board selection completed successfully")
@@ -169,27 +192,48 @@ class HostUI(BaseUI):
             print("Starting game...")
             self.launch_network_game()
         else:
-            print("Board selection error, please try again")
+            print("Board selection cancelled or incomplete")
             self.board_selected = False
     
     def launch_network_game(self):
-        if self.game_launched:  # ✅ Éviter les double-lancements
+        if self.game_launched:
             return
             
         print("Launching network game...")
         
         if self.session and self.board_selected:
-            self.game_launched = True  # ✅ Marquer le jeu comme lancé
+            self.game_launched = True
             
-            # ✅ Lancer le jeu en réseau sans fermer l'interface host
+            # ✅ CORRECTION : Intégrer le jeu dans notre boucle au lieu d'appeler run()
             network_game = NetworkGameAdapter(self.session)
-            network_game.run()
+            network_game.session.start_game()
             
-            # ✅ Une fois le jeu terminé, revenir à l'état d'attente
+            # ✅ Boucle de jeu intégrée
+            while network_game.running and self.running and not network_game.game_finished:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                        network_game.running = False
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        network_game.handle_click(event.pos)
+                    elif event.type == pygame.KEYDOWN and network_game.game_finished:
+                        network_game.running = False
+                        break
+                
+                network_game.update()
+                network_game.draw()
+                pygame.display.flip()
+                network_game.clock.tick(60)
+                
+                # Gestion de la fin automatique après 5 secondes
+                if network_game.game_finished and network_game.show_end_screen:
+                    network_game.end_game_timer += network_game.clock.get_time()
+                    if network_game.end_game_timer > 5000:
+                        network_game.running = False
+            
             print("Network game ended, returning to host interface")
             self.game_launched = False
             self.board_selected = False
-            # Ne pas fermer l'interface, permettre à l'host de relancer une partie
     
     def _place_pawns_katarenga(self, board):
         new_board = copy.deepcopy(board)
@@ -234,14 +278,14 @@ class HostUI(BaseUI):
                 r2, c2 = shift(r, c)
                 if r2 < grid_dim and c2 < grid_dim:
                     code = new_board[r2][c2] // 10
-                    new_board[r2][c2] = code * 10 + 2  # Player 2
+                    new_board[r2][c2] = code * 10 + 2
         
         for r, c in whites:
             if r < grid_dim and c < grid_dim:
                 r2, c2 = shift(r, c)
                 if r2 < grid_dim and c2 < grid_dim:
                     code = new_board[r2][c2] // 10
-                    new_board[r2][c2] = code * 10 + 1  # Player 1
+                    new_board[r2][c2] = code * 10 + 1
         
         return new_board
     
