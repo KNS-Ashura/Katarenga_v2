@@ -1,3 +1,4 @@
+# Online/JoinUI.py
 import pygame
 import threading
 from UI_tools.BaseUi import BaseUI
@@ -17,7 +18,6 @@ class JoinUI(BaseUI):
         self.connecting = False
         self.board_received = False
         self.game_started = False
-        self.game_launched = False
         
         self.ip_text = "127.0.0.1"
         self.ip_active = False
@@ -45,6 +45,8 @@ class JoinUI(BaseUI):
         
         self.ip_input_rect = pygame.Rect(center_x - 200, center_y - 100, 400, 50)
         self.connect_button = pygame.Rect(center_x - 100, center_y - 30, 200, 50)
+        
+        # Button to launch game (visible when board is received)
         self.start_game_button = pygame.Rect(center_x - 100, center_y + 30, 200, 50)
         
         self.info_y = center_y + 100
@@ -72,17 +74,21 @@ class JoinUI(BaseUI):
                 self.handle_text_input(event)
     
     def handle_click(self, pos):
+        # Back button
         if self.back_button.collidepoint(pos):
             self.running = False
             return
         
+        # IP input zone
         if not self.connected:
             self.ip_active = self.ip_input_rect.collidepoint(pos)
             
+            # Connection button
             if self.connect_button.collidepoint(pos) and not self.connecting and not self.connected:
                 self.attempt_connection()
         
-        elif self.board_received and self.start_game_button.collidepoint(pos) and not self.game_launched:
+        # Button to start game
+        elif self.board_received and self.start_game_button.collidepoint(pos):
             self.launch_network_game()
     
     def handle_text_input(self, event):
@@ -92,6 +98,7 @@ class JoinUI(BaseUI):
             if not self.connecting and not self.connected:
                 self.attempt_connection()
         elif event.unicode.isprintable() and len(self.ip_text) < 15:
+            # Only allow printable characters and limit length for ip adress
             if event.unicode.isdigit() or event.unicode == ".":
                 self.ip_text += event.unicode
     
@@ -103,10 +110,12 @@ class JoinUI(BaseUI):
         self.connecting = True
         self.set_status("Connection in progress...", (255, 255, 100))
         
+        # Launch connection in separate thread
         threading.Thread(target=self.connect_to_server, daemon=True).start()
     
     def connect_to_server(self):
         if self.network.connect_to_server(self.ip_text.strip()):
+            # Connection SUCCESS
             self.connected = True
             self.connecting = False
             self.set_status("Connected! Waiting for board...", (100, 255, 100))
@@ -123,28 +132,25 @@ class JoinUI(BaseUI):
             self.set_status("Unable to connect", (255, 100, 100))
     
     def handle_network_message(self, message):
-        print(f"Message received: {message}")
-        
         try:
             import json
             data = json.loads(message)
             
             if data.get('type') == 'BOARD_DATA':
+                # Reception of board data
                 self.board_received = True
                 self.session = GameSession(data['game_type'], self.network)
                 self.session.set_board(data['board'])
                 self.set_status("Board received! Ready to play", (100, 255, 100))
-                print(f"Board received for game type {data['game_type']}")
             
             elif data.get('type') == 'GAME_START':
                 self.game_started = True
                 self.set_status("Game started!", (100, 255, 100))
-                print("Game started by host")
-                if self.board_received and not self.game_launched:
+                # Auto-launch game when host starts
+                if self.board_received:
                     self.launch_network_game()
 
         except json.JSONDecodeError:
-            print(f"Received non-JSON message: {message}")
             if "READY" in message.upper() or "CLIENT_READY" in message:
                 self.set_status("Server ready", (100, 255, 100))
     
@@ -153,59 +159,20 @@ class JoinUI(BaseUI):
         self.connecting = False
         self.board_received = False
         self.game_started = False
-        self.game_launched = False
         self.set_status("Server disconnected", (255, 100, 100))
     
     def launch_network_game(self):
-        if self.game_launched:
-            return
-            
-        print("Launching network game...")
-        
         if self.session and self.board_received:
-            self.game_launched = True
+            # Close join interface BEFORE launching game
+            self.running = False
             
-            # ✅ CORRECTION : Intégrer le jeu dans notre boucle au lieu d'appeler run()
+            # Create and launch network game adapter
             network_game = NetworkGameAdapter(self.session)
-            network_game.session.start_game()
-            
-            # ✅ Boucle de jeu intégrée
-            while network_game.running and self.running and not network_game.game_finished:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                        network_game.running = False
-                        break
-                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        # Si le jeu est fini et qu'on clique, fermer le jeu
-                        if network_game.game_finished and network_game.show_end_screen:
-                            network_game.running = False
-                            break
-                        else:
-                            network_game.handle_click(event.pos)
-                    elif event.type == pygame.KEYDOWN and network_game.game_finished and network_game.show_end_screen:
-                        network_game.running = False
-                        break
-                
-                network_game.update()
-                network_game.draw()
-                pygame.display.flip()
-                network_game.clock.tick(60)
-                
-                # Gestion de la fin automatique après 5 secondes
-                if network_game.game_finished and network_game.show_end_screen:
-                    network_game.end_game_timer += network_game.clock.get_time()
-                    if network_game.end_game_timer > 5000:
-                        network_game.running = False
-            
-            print("Network game ended, returning to join interface")
-            self.game_launched = False
-            self.board_received = False
-            self.game_started = False
+            network_game.run()
     
     def set_status(self, message, color):
         self.status_message = message
         self.status_color = color
-        print(f"{message}")
     
     def update(self):
         self.cursor_timer += self.clock.get_time()
@@ -219,6 +186,7 @@ class JoinUI(BaseUI):
         
         screen.blit(self.title_surface, self.title_rect)
         
+        # Back button
         pygame.draw.rect(screen, (70, 70, 70), self.back_button)
         pygame.draw.rect(screen, (255, 255, 255), self.back_button, 2)
         back_text = self.button_font.render("Back", True, (255, 255, 255))
@@ -230,6 +198,7 @@ class JoinUI(BaseUI):
             self.draw_game_interface(screen)
     
     def draw_connection_interface(self, screen):
+        # Label for IP input
         label = self.button_font.render("Server IP address:", True, (255, 255, 255))
         label_rect = label.get_rect(centerx=self.get_width() // 2, y=self.ip_input_rect.y - 40)
         screen.blit(label, label_rect)
@@ -249,6 +218,7 @@ class JoinUI(BaseUI):
             cursor_y2 = text_y + text_surface.get_height() - 2
             pygame.draw.line(screen, (255, 255, 255), (cursor_x, cursor_y1), (cursor_x, cursor_y2), 2)
         
+        # Connection button
         button_color = (70, 130, 180)
         if self.connecting:
             button_color = (100, 100, 100)
@@ -267,6 +237,7 @@ class JoinUI(BaseUI):
             status_rect = status_surface.get_rect(centerx=self.get_width() // 2, y=self.info_y)
             screen.blit(status_surface, status_rect)
         
+        # Instructions
         instructions = [
             "Enter the IP address of the server",
             "The address should be shown in the host UI",
@@ -296,27 +267,18 @@ class JoinUI(BaseUI):
             surface = self.info_font.render(text, True, color)
             screen.blit(surface, (50, start_y + i * 30))
         
-        if self.board_received and not self.game_launched:
-            button_color = (100, 255, 100)
-            button_text = "Join Game"
+        # Button to manually launch game if not started yet
+        if self.board_received and not self.game_started:
+            pygame.draw.rect(screen, (100, 255, 100), self.start_game_button)
+            pygame.draw.rect(screen, (255, 255, 255), self.start_game_button, 2)
+            start_text = self.button_font.render("Join Game", True, (255, 255, 255))
+            screen.blit(start_text, start_text.get_rect(center=self.start_game_button.center))
+            
             instruction = "Board ready! Click to start game."
-        elif self.game_launched:
-            button_color = (100, 100, 100)
-            button_text = "Game Running"
-            instruction = "Game in progress!"
         elif self.game_started:
-            button_color = (100, 100, 100)
-            button_text = "Starting..."
-            instruction = "Game starting automatically..."
+            instruction = "Game in progress!"
         else:
-            button_color = (100, 100, 100)
-            button_text = "Waiting..."
             instruction = "Waiting for board data..."
-        
-        pygame.draw.rect(screen, button_color, self.start_game_button)
-        pygame.draw.rect(screen, (255, 255, 255), self.start_game_button, 2)
-        start_text = self.button_font.render(button_text, True, (255, 255, 255))
-        screen.blit(start_text, start_text.get_rect(center=self.start_game_button.center))
         
         inst_surface = self.button_font.render(instruction, True, (255, 255, 100))
         inst_rect = inst_surface.get_rect(centerx=self.get_width() // 2, y=start_y + len(info_texts) * 30 + 50)

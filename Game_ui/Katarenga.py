@@ -1,6 +1,7 @@
 import pygame
 import copy
 import time
+import random
 from UI_tools.BaseUi import BaseUI
 from Board.Board_draw_tools import Board_draw_tools
 from Game_ui.move_rules import Moves_rules
@@ -130,6 +131,80 @@ class Katarenga(BaseUI):
         self.current_player = 2 if self.current_player == 1 else 1
         print(f"Player {self.current_player}'s turn")
 
+    def check_victory(self):
+        player1_count = 0
+        player2_count = 0
+        
+        for row in range(self.grid_dim):
+            for col in range(self.grid_dim):
+                player = self.board[row][col] % 10
+                if player == 1:
+                    player1_count += 1
+                elif player == 2:
+                    player2_count += 1
+        
+        # Victory by elimination
+        if player1_count == 0:
+            print("Player 2 wins by elimination!")
+            self.running = False
+            return 2
+        if player2_count == 0:
+            print("Player 1 wins by elimination!")
+            self.running = False
+            return 1
+        
+        # Victory by corners
+        if self.grid_dim >= 10:
+            if self.board[9][0] % 10 == 1 and self.board[9][9] % 10 == 1:
+                print("Player 1 wins by corner occupation!")
+                self.running = False
+                return 1
+            
+            if self.board[0][0] % 10 == 2 and self.board[0][9] % 10 == 2:
+                print("Player 2 wins by corner occupation!")
+                self.running = False
+                return 2
+        
+        return 0  # No victory
+
+    def play_ai_turn(self):
+        # Simple AI for local mode
+        player_pawns = []
+        for row in range(self.grid_dim):
+            for col in range(self.grid_dim):
+                if self.board[row][col] % 10 == 2:
+                    player_pawns.append((row, col))
+        
+        if not player_pawns:
+            return
+        
+        random.shuffle(player_pawns)
+        for from_row, from_col in player_pawns:
+            possible_moves = []
+            for to_row in range(self.grid_dim):
+                for to_col in range(self.grid_dim):
+                    if self.is_valid_move(from_row, from_col, to_row, to_col):
+                        possible_moves.append((to_row, to_col))
+            
+            if possible_moves:
+                to_row, to_col = random.choice(possible_moves)
+                self.make_move(from_row, from_col, to_row, to_col)
+                
+                if self.check_victory() == 0:
+                    self.switch_player()
+                return
+
+    def draw_pawn(self, screen, rect, player_code):
+        center = rect.center
+        radius = self.cell_size // 3
+        
+        if player_code == 1:
+            pygame.draw.circle(screen, (255, 255, 255), center, radius)
+            pygame.draw.circle(screen, (0, 0, 0), center, radius, 2)
+        elif player_code == 2:
+            pygame.draw.circle(screen, (0, 0, 0), center, radius)
+            pygame.draw.circle(screen, (255, 255, 255), center, radius, 2)
+
     def draw(self):
         screen = self.get_screen()
         screen.fill((30, 30, 30))  # dark background
@@ -156,4 +231,14 @@ class Katarenga(BaseUI):
                 pygame.draw.rect(screen, (255, 255, 255), rect, 1)  # grid lines
 
                 if player_code > 0:
-                    self.draw_pawn(screen, rect, player_code)  # draw pawn baka
+                    self.draw_pawn(screen, rect, player_code)  # draw pawn
+
+        # Draw back button
+        pygame.draw.rect(screen, (180, 180, 180), self.back_button_rect)
+        back_text = self.info_font.render("Back", True, (0, 0, 0))
+        back_rect = back_text.get_rect(center=self.back_button_rect.center)
+        screen.blit(back_text, back_rect)
+
+        # Draw current player info
+        player_text = self.info_font.render(f"Player {self.current_player}'s turn", True, (255, 255, 255))
+        screen.blit(player_text, (20, self.get_height() - 50))
