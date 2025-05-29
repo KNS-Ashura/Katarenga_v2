@@ -97,25 +97,41 @@ class Katarenga(BaseUI):
     def process_move(self, row, col):
         cell_value = self.board[row][col]
         player_on_cell = cell_value % 10
-
+        
         if self.selected_pawn is None:
             if player_on_cell == self.current_player:
-                self.selected_pawn = (row, col)  # select pawn
+                self.selected_pawn = (row, col)
+                print(f"Pion sélectionné à ({row}, {col})")
         else:
-            sr, sc = self.selected_pawn
+            selected_row, selected_col = self.selected_pawn
+            
             if (row, col) == self.selected_pawn:
-                self.selected_pawn = None  # deselect pawn
+                self.selected_pawn = None
+                print("Pion désélectionné")
             elif player_on_cell == self.current_player:
-                self.selected_pawn = (row, col)  # switch selection
+                self.selected_pawn = (row, col)
+                print(f"Nouveau pion sélectionné à ({row}, {col})")
             else:
-                # Check special moves for corners or normal move
-                if self.is_valid_move(sr, sc, row, col):
-                    self.make_move(sr, sc, row, col)
+                if self.current_player == 1 and 1 <= selected_col <= 9 and selected_row == 1 and (row, col) in [(0, 0), (0, 9)]:
+                    self.make_move(selected_row, selected_col, row, col)
                     self.selected_pawn = None
-                    if self.check_victory() == 0:
+                    winner = self.check_victory()
+                    if winner == 0:
+                        self.switch_player()
+                elif self.current_player == 2 and 1 <= selected_col <= 9 and selected_row == 8 and (row, col) in [(9, 0), (9, 9)]:
+                    self.make_move(selected_row, selected_col, row, col)
+                    self.selected_pawn = None
+                    winner = self.check_victory()
+                    if winner == 0:
+                        self.switch_player()
+                elif self.is_valid_move(selected_row, selected_col, row, col):
+                    self.make_move(selected_row, selected_col, row, col)
+                    self.selected_pawn = None
+                    winner = self.check_victory()
+                    if winner == 0:
                         self.switch_player()
                 else:
-                    print("Invalid move")
+                    print("invalid movement")
 
     def is_valid_move(self, fr, fc, tr, tc):
         case_color = self.board[fr][fc]
@@ -131,58 +147,6 @@ class Katarenga(BaseUI):
     def switch_player(self):
         self.current_player = 2 if self.current_player == 1 else 1
         print(f"Player {self.current_player}'s turn")
-
-    def check_victory(self):
-        player1_count = 0
-        player2_count = 0
-        
-        for row in range(self.grid_dim):
-            for col in range(self.grid_dim):
-                player = self.board[row][col] % 10
-                if player == 1:
-                    player1_count += 1
-                elif player == 2:
-                    player2_count += 1
-        
-        # Victory by elimination
-        if player1_count == 0:
-            print("Player 2 wins by elimination!")
-            self.running = False
-            try:
-                WinScreen("Player 2")
-            except Exception as e:
-                print(f"Error showing win screen: {e}")
-            return 2
-        if player2_count == 0:
-            print("Player 1 wins by elimination!")
-            self.running = False
-            try:
-                WinScreen("Player 1")
-            except Exception as e:
-                print(f"Error showing win screen: {e}")
-            return 1
-        
-        # Victory by corners
-        if self.grid_dim >= 10:
-            if self.board[9][0] % 10 == 1 and self.board[9][9] % 10 == 1:
-                print("Player 1 wins by corner occupation!")
-                self.running = False
-                try:
-                    WinScreen("Player 1")
-                except Exception as e:
-                    print(f"Error showing win screen: {e}")
-                return 1
-            
-            if self.board[0][0] % 10 == 2 and self.board[0][9] % 10 == 2:
-                print("Player 2 wins by corner occupation!")
-                self.running = False
-                try:
-                    WinScreen("Player 2")
-                except Exception as e:
-                    print(f"Error showing win screen: {e}")
-                return 2
-        
-        return 0  # No victory
 
     def play_ai_turn(self):
         # Simple AI for local mode
@@ -328,19 +292,23 @@ class Katarenga(BaseUI):
         if player1_count == 0:
             print("The player 2 has won (no pawns left for player 1)!")
             self.running = False
+            WinScreen("Player 2")
             return 2
         if player2_count == 0:
             print("The player 1 has won (no pawns left for player 2)!")
+            WinScreen("Player 1")
             self.running = False
             return 1
 
         if self.board[9][0] % 10 == 2 and self.board[9][9] % 10 == 2:
             print("The player 1 has won (occupied the corners bottom left and right)!")
+            WinScreen("Player 1")   
             self.running = False
             return 1
 
         if self.board[0][0] % 10 == 1 and self.board[0][9] % 10 == 1:
             print("the player 2 has won (occupied the corners top left and right)!")
+            WinScreen("Player 2")
             self.running = False
             return 2
 

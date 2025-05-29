@@ -75,6 +75,7 @@ class Isolation(BaseUI):
                 # Check for game end conditions
                 if self.total_moves >= self.max_moves or not self.can_play():
                     print(f"Player {self.current_player} wins!")
+                    WinScreen(f"Player {self.current_player}")
                     self.running = False
                 else:
                     # Switch player

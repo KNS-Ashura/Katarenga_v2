@@ -23,6 +23,13 @@ class SquareEditorUi(BaseUI):
         self.title_surface = self.title_font.render("Square Editor", True, (255, 255, 255))
         self.title_rect = self.title_surface.get_rect(center=(screen_width // 2, 30))
 
+        self.rule_font = pygame.font.SysFont(None, 24)
+        self.rule_surface = self.rule_font.render(
+            "Every square must contain four case with each color :" \
+            " green ,red ,blue, yellow", True, (200, 200, 200)
+        )
+        self.rule_rect = self.rule_surface.get_rect(topright=(screen_width - 20, self.title_rect.bottom + 10))
+
         # Position offsets
         self.top_offset = self.title_rect.bottom + 40
         self.left_offset = (screen_width - self.grid_size) // 2
@@ -72,13 +79,19 @@ class SquareEditorUi(BaseUI):
             self.running = False
             return
 
-        # Save button clicked: validate and save
         if self.save_button_rect.collidepoint(x, y):
             if self.text_input.strip() == "":
                 print("Error: You must enter a name before saving.")
                 return
 
-            if all(cell != 0 for row in self.square for cell in row):
+            color_counts = {1: 0, 2: 0, 3: 0, 4: 0}
+            for row in self.square:
+                for cell in row:
+                    color = cell // 10
+                    if color in color_counts:
+                        color_counts[color] += 1
+
+            if all(count >= 4 for count in color_counts.values()):
                 print("Save pressed")
                 self.board_obj.set_square_list(self.text_input, self.square)
                 filename = "game_data.json"
@@ -86,11 +99,7 @@ class SquareEditorUi(BaseUI):
                 self.board_obj.save_to_file(filename)
                 self.running = False
             else:
-                print("Error: All cells must be non-zero before saving.")
-
-        # Ignore clicks outside grid area
-        if y < self.top_offset or x < self.left_offset:
-            return
+                return
 
         # Calculate clicked cell in grid
         col = (x - self.left_offset) // self.cell_size
@@ -117,6 +126,8 @@ class SquareEditorUi(BaseUI):
 
         # Draw title
         screen.blit(self.title_surface, self.title_rect)
+
+        screen.blit(self.rule_surface, self.rule_rect)
 
         # Draw 4x4 grid of squares
         for row in range(4):
