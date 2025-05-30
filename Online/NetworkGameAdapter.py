@@ -384,18 +384,18 @@ class NetworkGameAdapter(BaseUI):
     
     def draw(self):
         screen = self.get_screen()
-        
+
         # Si le jeu est terminé, afficher l'écran de victoire
         if self.game_finished and hasattr(self, 'win_screen'):
             self.win_screen.draw(screen)
             return
-    
+
         # Sinon, afficher normalement le jeu
         if hasattr(self.game_instance, 'draw'):
             self._draw_using_game_instance(screen)
         else:
             self._draw_basic(screen)
-        
+
         # Infos réseau
         self._draw_network_info(screen)
     
