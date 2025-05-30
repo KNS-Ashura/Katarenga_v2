@@ -97,16 +97,22 @@ class NetworkGameAdapter(BaseUI):
                 self.handle_click(event.pos)
     
     def handle_click(self, pos):
-        # Check if it's the player's turn
-        if self.current_player != self.local_player:
-            self.set_status("It's not your turn", (255, 255, 100))
+        # Check if clicking back button FIRST (should work regardless of turn)
+        back_rect = pygame.Rect(20, 20, 120, 40)
+        if back_rect.collidepoint(pos):
+            self.running = False
             return
-        
+            
         # Check if clicking back button (if game instance has one)
         if hasattr(self.game_instance, 'back_button_rect'):
             if self.game_instance.back_button_rect.collidepoint(pos):
                 self.running = False
                 return
+        
+        # Check if it's the player's turn for game moves
+        if self.current_player != self.local_player:
+            self.set_status("It's not your turn", (255, 255, 100))
+            return
         
         # Handle game-specific clicks
         if self.game_type in [1, 2]:  # Katarenga and Congress
@@ -202,7 +208,142 @@ class NetworkGameAdapter(BaseUI):
         if self.game_type == 2 and hasattr(self.game_instance, 'base_board'):
             self.game_instance.base_board = self._extract_base_board(new_board)
         
+        # Vérifier les conditions de victoire après chaque mise à jour du plateau
+        self._check_local_victory()
+        
         print("Board updated")
+    
+    def _check_local_victory(self):
+        """Vérifie les conditions de victoire localement"""
+        if self.game_finished:
+            return
+            
+        winner = None
+        
+        if self.game_type == 1:  # Katarenga
+            winner = self._check_katarenga_victory()
+        elif self.game_type == 2:  # Congress
+            winner = self._check_congress_victory()
+        elif self.game_type == 3:  # Isolation
+            winner = self._check_isolation_victory()
+        
+        if winner:
+            self.on_game_end(winner)
+    
+    def _check_katarenga_victory(self):
+        """Vérification de victoire pour Katarenga"""
+        player1_count = 0
+        player2_count = 0
+        
+        # Compter les pions
+        for row in range(len(self.board)):
+            for col in range(len(self.board[0])):
+                player = self.board[row][col] % 10
+                if player == 1:
+                    player1_count += 1
+                elif player == 2:
+                    player2_count += 1
+        
+        # Victoire par élimination
+        if player1_count == 0:
+            return 2
+        if player2_count == 0:
+            return 1
+        
+        # Victoire par coins (pour plateau 10x10)
+        if len(self.board) >= 10 and len(self.board[0]) >= 10:
+            # Player 1 gagne s'il occupe les deux coins du bas
+            if self.board[9][0] % 10 == 1 and self.board[9][9] % 10 == 1:
+                return 1
+            # Player 2 gagne s'il occupe les deux coins du haut
+            if self.board[0][0] % 10 == 2 and self.board[0][9] % 10 == 2:
+                return 2
+        
+        return None
+    
+    def _check_congress_victory(self):
+        """Vérification de victoire pour Congress"""
+        from collections import deque
+        
+        grid_dim = len(self.board)
+        
+        for player in [1, 2]:
+            # Trouver toutes les positions du joueur
+            positions = [(i, j) for i in range(grid_dim) for j in range(grid_dim)
+                        if self.board[i][j] % 10 == player]
+            
+            if not positions:
+                continue
+            
+            # Vérifier si tous les pions sont connectés avec BFS
+            visited = set([positions[0]])
+            queue = deque([positions[0]])
+            
+            while queue:
+                x, y = queue.popleft()
+                for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+                    nx, ny = x + dx, y + dy
+                    if (0 <= nx < grid_dim and 0 <= ny < grid_dim and
+                        (nx, ny) not in visited and self.board[nx][ny] % 10 == player):
+                        visited.add((nx, ny))
+                        queue.append((nx, ny))
+            
+            # Victoire si tous les pions sont connectés
+            if len(visited) == len(positions):
+                return player
+        
+        return None
+    
+    def _check_isolation_victory(self):
+        """Vérification de victoire pour Isolation"""
+        # Compter les mouvements total
+        total_moves = 0
+        for row in range(len(self.board)):
+            for col in range(len(self.board[0])):
+                if self.board[row][col] % 10 != 0:
+                    total_moves += 1
+        
+        max_moves = len(self.board) * len(self.board[0])
+        
+        # Jeu terminé si le plateau est plein
+        if total_moves >= max_moves:
+            return self.current_player  # Dernier joueur à jouer gagne
+        
+        # Vérifier si le joueur actuel peut encore jouer
+        if not self._can_play_isolation(self.current_player):
+            # Joueur actuel ne peut pas jouer, l'adversaire gagne
+            return 2 if self.current_player == 1 else 1
+        
+        return None
+    
+    def _can_play_isolation(self, current_player):
+        """Vérifie si le joueur peut encore jouer en Isolation"""
+        for i in range(len(self.board)):
+            for j in range(len(self.board[0])):
+                case = self.board[i][j]
+                # Ignorer les coins et cases déjà occupées
+                if case in (0, 50, 60) or case % 10 != 0:
+                    continue
+                
+                # Vérifier si la case n'est pas "en prise" (sous attaque)
+                if not self._is_square_under_attack(i, j):
+                    return True
+        return False
+    
+    def _is_square_under_attack(self, x, y):
+        """Vérifie si une case est sous attaque"""
+        for i in range(len(self.board)):
+            for j in range(len(self.board[0])):
+                case = self.board[i][j]
+                if case % 10 != 0:  # Il y a un pion ici
+                    try:
+                        # Utiliser les règles de mouvement pour vérifier l'attaque
+                        if hasattr(self.game_instance, 'moves_rules'):
+                            if self.game_instance.moves_rules.verify_move(case, i, j, x, y):
+                                return True
+                    except:
+                        continue
+        return False
     
     def on_player_change(self, new_player):
         self.current_player = new_player
