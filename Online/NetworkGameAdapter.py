@@ -248,20 +248,17 @@ class NetworkGameAdapter(BaseUI):
     def _trigger_victory(self, winner):
         
         self.game_finished = True
-        self.win_screen = WinScreen(winner_name)
+
         # Déterminer le nom du gagnant
         if winner == self.local_player:
-            self.win_screen = WinScreen(f"Player {self.local_player} (You)")
             winner_name = f"Player {self.local_player} (You)"
             self.set_status("You win!", (100, 255, 100))
         else:
             winner_name = f"Player {winner} (Opponent)"
             self.set_status("You lose!", (255, 100, 100))
-
-        print(f"Victory triggered - Winner: {winner_name}")
-
-        # Afficher l'écran de victoire (maintenant correctement indenté)
-       
+        
+        # Afficher l'écran de victoire après avoir défini le nom
+        self.win_screen = WinScreen(winner_name)
             
         
 
@@ -362,23 +359,20 @@ class NetworkGameAdapter(BaseUI):
             self.set_status("Opponent's turn", (255, 255, 100))
     
     def on_game_end(self, winner):
+        
         self.game_finished = True
-    
-        # Determine winner name and show win screen
         if winner == "Disconnection":
             self.set_status("Opponent disconnected - Press Escape to quit", (255, 100, 100))
-            winner_name = f"Player {self.local_player} (Opponent disconnected)"
-            WinScreen(winner_name)
+            if self.local_player == 1:
+                WinScreen("Player 1 (You - Opponent disconnected)")
+            else:
+                WinScreen("Player 2 (You - Opponent disconnected)")
         elif winner == self.local_player:
             self.set_status("You win! Press Escape to quit", (100, 255, 100))
-            winner_name = f"Player {self.local_player} (You)"
-            WinScreen(winner_name)
+            WinScreen(f"Player {self.local_player} (You)")
         else:
             self.set_status("You lose! Press Escape to quit", (255, 100, 100))
-            winner_name = f"Player {winner} (Opponent)"
-            WinScreen(winner_name)
-
-        print(f"Game ended - Winner: {winner}")
+            WinScreen(f"Player {winner} (Opponent)")
 
     def set_status(self, message, color):
         self.status_message = message
@@ -391,14 +385,18 @@ class NetworkGameAdapter(BaseUI):
     def draw(self):
         screen = self.get_screen()
         
+        # Si le jeu est terminé, afficher l'écran de victoire
+        if self.game_finished and hasattr(self, 'win_screen'):
+            self.win_screen.draw(screen)
+            return
+    
+        # Sinon, afficher normalement le jeu
         if hasattr(self.game_instance, 'draw'):
-            # Use the original game's draw method with modifications
             self._draw_using_game_instance(screen)
         else:
-            # Fallback drawing
             self._draw_basic(screen)
         
-        # Draw network information
+        # Infos réseau
         self._draw_network_info(screen)
     
     def _draw_using_game_instance(self, screen):

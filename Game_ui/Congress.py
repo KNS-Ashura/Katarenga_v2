@@ -73,7 +73,6 @@ class Congress(BaseUI):
         return new_board
 
     def set_network_mode(self, network_mode=True, victory_callback=None):
-        """Configure le mode réseau avec callback pour la victoire"""
         self.network_mode = network_mode
         self.victory_callback = victory_callback
 
@@ -178,7 +177,7 @@ class Congress(BaseUI):
         print(f"Player {self.current_player}'s turn")
 
     def check_victory(self, player):
-        """Vérifie si un joueur spécifique a gagné"""
+        
         positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
                      if self.board[i][j] % 10 == player]
         if not positions:
