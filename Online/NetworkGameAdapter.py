@@ -5,10 +5,8 @@ from Game_ui.move_rules import Moves_rules
 from UI_tools.win_screen import WinScreen
 
 from Game_ui.Katarenga import Katarenga
+from Game_ui.Congress import Congress
 from Game_ui.Isolation import Isolation
-import copy
-from collections import deque
-import random
 
 class NetworkGameAdapter(BaseUI):
     
@@ -44,17 +42,24 @@ class NetworkGameAdapter(BaseUI):
         if self.game_type == 1:
             return Katarenga(ai_disabled, self.board)
         elif self.game_type == 2:
-            # Pour Congress, on crée notre propre instance corrigée
-            return self._create_congress_instance(ai_disabled, self.board)
+            # Pour Congress, on utilise le fichier original mais on configure le mode réseau
+            congress_instance = Congress(ai_disabled, self.board)
+            # Remplacer le plateau généré par celui du réseau
+            congress_instance.board = self.board
+            congress_instance.base_board = self._extract_base_board(self.board)
+            # IMPORTANT: Configurer le mode réseau avec callback
+            congress_instance.set_network_mode(True, victory_callback=self._handle_local_victory)
+            return congress_instance
         elif self.game_type == 3:
             return Isolation(ai_disabled, self.board)
         else:
             raise ValueError(f"Unknown game type: {self.game_type}")
     
-    def _create_congress_instance(self, ai, board):
-        """Crée une instance Congress corrigée directement"""
-        congress_instance = CongressFixed(ai, board)
-        return congress_instance
+    def _handle_local_victory(self, winner):
+        """Callback appelé par Congress quand une victoire est détectée localement"""
+        print(f"Victory callback received: Player {winner}")
+        # Déclencher immédiatement l'affichage de victoire
+        self._trigger_victory(winner)
     
     def _extract_base_board(self, board_with_pawns):
         """Extrait le plateau de base (sans pions) à partir du plateau avec pions"""
@@ -100,16 +105,22 @@ class NetworkGameAdapter(BaseUI):
                 self.handle_click(event.pos)
     
     def handle_click(self, pos):
-        # Check if it's the player's turn
-        if self.current_player != self.local_player:
-            self.set_status("It's not your turn", (255, 255, 100))
+        # Check if clicking back button FIRST (should work regardless of turn)
+        back_rect = pygame.Rect(20, 20, 120, 40)
+        if back_rect.collidepoint(pos):
+            self.running = False
             return
-        
+            
         # Check if clicking back button (if game instance has one)
         if hasattr(self.game_instance, 'back_button_rect'):
             if self.game_instance.back_button_rect.collidepoint(pos):
                 self.running = False
                 return
+        
+        # Check if it's the player's turn for game moves
+        if self.current_player != self.local_player:
+            self.set_status("It's not your turn", (255, 255, 100))
+            return
         
         # Handle game-specific clicks
         if self.game_type in [1, 2]:  # Katarenga and Congress
@@ -168,6 +179,9 @@ class NetworkGameAdapter(BaseUI):
         # Attempt to place piece through network
         if self.session.make_move(None, (row, col)):
             self.set_status("Piece placed", (100, 255, 100))
+            
+            # Vérifier immédiatement la victoire après un placement réussi
+            self._check_local_victory()
         else:
             self.set_status("Invalid placement", (255, 100, 100))
     
@@ -205,7 +219,139 @@ class NetworkGameAdapter(BaseUI):
         if self.game_type == 2 and hasattr(self.game_instance, 'base_board'):
             self.game_instance.base_board = self._extract_base_board(new_board)
         
+        # Vérifier les conditions de victoire après chaque mise à jour du plateau
+        # SEULEMENT pour Katarenga et Isolation (Congress gère via callback)
+        if self.game_type in [1, 3]:
+            self._check_local_victory()
+        
         print("Board updated")
+    
+    def _check_local_victory(self):
+        """Vérifie les conditions de victoire localement (pour Katarenga et Isolation)"""
+        if self.game_finished:
+            return
+            
+        winner = None
+        
+        if self.game_type == 1:  # Katarenga
+            winner = self._check_katarenga_victory()
+        elif self.game_type == 3:  # Isolation
+            winner = self._check_isolation_victory()
+        # Congress est géré via callback, pas ici
+        
+        if winner:
+            print(f"Local victory detected: Player {winner} wins!")
+            # Déclencher la fin de partie avec animation
+            self._trigger_victory(winner)
+    
+    def _trigger_victory(self, winner):
+        """Déclenche l'animation de victoire et termine le jeu"""
+        self.game_finished = True
+        
+        # Déterminer le nom du gagnant pour l'écran de victoire
+        if winner == self.local_player:
+            winner_name = f"Player {self.local_player} (You)"
+            self.set_status("You win!", (100, 255, 100))
+        else:
+            winner_name = f"Player {winner} (Opponent)"
+            self.set_status("You lose!", (255, 100, 100))
+        
+        print(f"Victory triggered - Winner: {winner_name}")
+        
+        # Afficher l'écran de victoire immédiatement
+        try:
+            win_screen = WinScreen(winner_name)
+        except Exception as e:
+            print(f"Error showing win screen: {e}")
+        
+        # Aussi déclencher le callback réseau si disponible
+        if hasattr(self.session, '_end_game'):
+            try:
+                self.session._end_game(winner)
+            except Exception as e:
+                print(f"Error sending victory to network: {e}")
+    
+    def _check_katarenga_victory(self):
+        """Vérification de victoire pour Katarenga"""
+        player1_count = 0
+        player2_count = 0
+        
+        # Compter les pions
+        for row in range(len(self.board)):
+            for col in range(len(self.board[0])):
+                player = self.board[row][col] % 10
+                if player == 1:
+                    player1_count += 1
+                elif player == 2:
+                    player2_count += 1
+        
+        # Victoire par élimination
+        if player1_count == 0:
+            return 2
+        if player2_count == 0:
+            return 1
+        
+        # Victoire par coins (pour plateau 10x10)
+        if len(self.board) >= 10 and len(self.board[0]) >= 10:
+            # Player 1 gagne s'il occupe les deux coins du bas
+            if self.board[9][0] % 10 == 1 and self.board[9][9] % 10 == 1:
+                return 1
+            # Player 2 gagne s'il occupe les deux coins du haut
+            if self.board[0][0] % 10 == 2 and self.board[0][9] % 10 == 2:
+                return 2
+        
+        return None
+    
+    def _check_isolation_victory(self):
+        """Vérification de victoire pour Isolation"""
+        # Compter les mouvements total
+        total_moves = 0
+        for row in range(len(self.board)):
+            for col in range(len(self.board[0])):
+                if self.board[row][col] % 10 != 0:
+                    total_moves += 1
+        
+        max_moves = len(self.board) * len(self.board[0])
+        
+        # Jeu terminé si le plateau est plein
+        if total_moves >= max_moves:
+            return self.current_player  # Dernier joueur à jouer gagne
+        
+        # Vérifier si le joueur actuel peut encore jouer
+        if not self._can_play_isolation(self.current_player):
+            # Joueur actuel ne peut pas jouer, l'adversaire gagne
+            return 2 if self.current_player == 1 else 1
+        
+        return None
+    
+    def _can_play_isolation(self, current_player):
+        """Vérifie si le joueur peut encore jouer en Isolation"""
+        for i in range(len(self.board)):
+            for j in range(len(self.board[0])):
+                case = self.board[i][j]
+                # Ignorer les coins et cases déjà occupées
+                if case in (0, 50, 60) or case % 10 != 0:
+                    continue
+                
+                # Vérifier si la case n'est pas "en prise" (sous attaque)
+                if not self._is_square_under_attack(i, j):
+                    return True
+        return False
+    
+    def _is_square_under_attack(self, x, y):
+        """Vérifie si une case est sous attaque"""
+        for i in range(len(self.board)):
+            for j in range(len(self.board[0])):
+                case = self.board[i][j]
+                if case % 10 != 0:  # Il y a un pion ici
+                    try:
+                        # Utiliser les règles de mouvement pour vérifier l'attaque
+                        if hasattr(self.game_instance, 'moves_rules'):
+                            if self.game_instance.moves_rules.verify_move(case, i, j, x, y):
+                                return True
+                    except:
+                        continue
+        return False
     
     def on_player_change(self, new_player):
         self.current_player = new_player
@@ -214,6 +360,14 @@ class NetworkGameAdapter(BaseUI):
         else:
             self.set_status("Opponent's turn", (255, 255, 100))
     
+    def on_game_end(self, winner):
+        self.game_finished = True
+        
+        # Determine winner name for win screen
+        winner_name = ""
+        if winner == "Disconnection":
+            self.set_status("Opponent disconnected - Press Escape to quit", (255, 100, 100))
+            winner_name = f"Player {self.local_player} (Opponent disconnected)"
     def on_game_end(self, winner):
         self.game_finished = True
         
@@ -392,103 +546,3 @@ class NetworkGameAdapter(BaseUI):
         return (self.current_player == self.local_player and 
                 self.session.game_started and 
                 not self.game_finished)
-
-
-class CongressFixed(BaseUI):
-    """Version corrigée de Congress intégrée dans NetworkGameAdapter"""
-    
-    def __init__(self, ai, board, title="Congress"):
-        super().__init__(title)
-
-        if board is None:
-            raise ValueError("Board cannot be None")
-
-        # Utiliser directement le plateau réseau sans le modifier
-        self.board = copy.deepcopy(board)
-        self.base_board = self._extract_base_board(board)
-
-        # Board and UI dimensions
-        self.cell_size = 60
-        self.grid_dim = 8  # Fixed to 8x8 for Congress game
-        self.grid_size = self.cell_size * self.grid_dim
-        self.top_offset = 80
-        self.left_offset = (self.get_width() - self.grid_size) // 2
-
-        # Title font and text surface for display
-        self.title_font = pygame.font.SysFont(None, 48)
-        self.title_surface = self.title_font.render("Congress", True, (255, 255, 255))
-        self.title_rect = self.title_surface.get_rect(center=(self.get_width() // 2, 40))
-
-        # Back button rectangle for navigation
-        self.back_button_rect = pygame.Rect(20, 20, 120, 40)
-
-        # Tools for board drawing and move validation
-        self.board_ui = Board_draw_tools()
-        self.moves_rules = Moves_rules(self.board)
-
-        # Game state variables
-        self.current_player = 1
-        self.selected_pawn = None
-        self.info_font = pygame.font.SysFont(None, 36)
-
-        self.__ai = ai  # AI player flag or instance
-
-    def _extract_base_board(self, board_with_pawns):
-        """Extrait le plateau de base (sans pions) à partir du plateau avec pions"""
-        base_board = copy.deepcopy(board_with_pawns)
-        
-        for i in range(len(base_board)):
-            for j in range(len(base_board[0])):
-                # Garde seulement la couleur de base (retire les pions)
-                color_code = base_board[i][j] // 10
-                base_board[i][j] = color_code * 10
-        
-        return base_board
-
-    def draw(self):
-        """Draw the full game screen: background, board grid, pawns, UI elements."""
-        screen = self.get_screen()
-
-        # Draw background
-        screen.blit(self.get_background(), (0, 0))
-
-        # Draw title
-        screen.blit(self.title_surface, self.title_rect)
-
-        # Draw the board cells and pawns
-        for row in range(self.grid_dim):
-            for col in range(self.grid_dim):
-                rect = pygame.Rect(
-                    col * self.cell_size + self.left_offset,
-                    row * self.cell_size + self.top_offset,
-                    self.cell_size,
-                    self.cell_size
-                )
-                base_val = self.base_board[row][col]
-                color_code = base_val // 10
-                color = self.board_ui.get_color_from_board(color_code)
-                pygame.draw.rect(screen, color, rect)
-                pygame.draw.rect(screen, (255, 255, 255), rect, 1)
-
-                # Highlight selected pawn
-                if self.selected_pawn == (row, col):
-                    pygame.draw.rect(screen, (255, 255, 0), rect, 4)
-
-                # Draw pawn if present
-                cell_val = self.board[row][col]
-                owner = cell_val % 10
-                if owner != 0:
-                    pawn_color = (0, 0, 0) if owner == 2 else (255, 255, 255)
-                    center = rect.center
-                    pygame.draw.circle(screen, pawn_color, center, self.cell_size // 3)
-
-        # Draw back button
-        pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
-        back_text = self.info_font.render("Back", True, (255, 255, 255))
-        back_rect = back_text.get_rect(center=self.back_button_rect.center)
-        screen.blit(back_text, back_rect)
-
-        # Draw current player info
-        player_text = self.info_font.render(f"Player {self.current_player}'s turn", True, (255, 255, 255))
-        screen.blit(player_text, (20, self.get_height() - 50))

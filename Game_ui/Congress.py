@@ -20,7 +20,7 @@ class Congress(BaseUI):
 
         # Board and UI dimensions
         self.cell_size = 60
-        self.grid_dim = len(self.base_board)
+        self.grid_dim = 8
         self.grid_size = self.cell_size * self.grid_dim
         self.top_offset = 80
         self.left_offset = (self.get_width() - self.grid_size) // 2
@@ -46,6 +46,10 @@ class Congress(BaseUI):
         self.info_font = pygame.font.SysFont(None, 36)
 
         self.__ai = ai  # AI player flag or instance
+        
+        # Flags pour la gestion de la victoire
+        self.network_mode = False
+        self.victory_callback = None  # Callback pour le mode réseau
 
     def place_pawn_congress(self, base_board):
         new_board = copy.deepcopy(base_board)
@@ -67,6 +71,11 @@ class Congress(BaseUI):
             new_board[r][c] = color * 10 + 1
 
         return new_board
+
+    def set_network_mode(self, network_mode=True, victory_callback=None):
+        """Configure le mode réseau avec callback pour la victoire"""
+        self.network_mode = network_mode
+        self.victory_callback = victory_callback
 
     def run(self):
         #Main game loop: handles events, draws UI, updates display, and runs AI if active.
@@ -125,17 +134,30 @@ class Congress(BaseUI):
                 if self.board[row][col] % 10 == 0 and self.is_valid_move(sel_r, sel_c, row, col):
                     self.make_move(sel_r, sel_c, row, col)
                     self.selected_pawn = None
-                    if self.check_victory(self.current_player):
-                        print(f"Player {self.current_player} wins!")
-                        try:
-                            WinScreen(f"Player {self.current_player}")
-                        except Exception as e:
-                            print(f"Error showing win screen: {e}")
-                        self.running = False
-                    else:
+                    
+                    # Toujours vérifier la victoire après un mouvement
+                    self.check_and_handle_victory()
+                    
+                    # Si pas de victoire, changer de joueur
+                    if self.running:  # Le jeu continue
                         self.switch_player()
                 else:
                     print("Invalid move or square occupied")
+
+    def check_and_handle_victory(self):
+        """Vérifie la victoire et la gère selon le mode (local ou réseau)"""
+        winner = self.check_all_players_victory()
+        if winner:
+            if self.network_mode:
+                # Mode réseau : notifier via callback sans afficher WinScreen
+                print(f"Victory detected in network mode: Player {winner}")
+                if self.victory_callback:
+                    self.victory_callback(winner)
+                # Le jeu continue, NetworkGameAdapter gère l'affichage
+            else:
+                # Mode local : afficher WinScreen et arrêter le jeu
+                print(f"Victory detected in local mode: Player {winner}")
+                self.trigger_victory_local(winner)
 
     def is_valid_move(self, fr, fc, tr, tc):
         #Checks if move is valid by delegating to move rules verifier.
@@ -156,6 +178,7 @@ class Congress(BaseUI):
         print(f"Player {self.current_player}'s turn")
 
     def check_victory(self, player):
+        """Vérifie si un joueur spécifique a gagné"""
         positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
                      if self.board[i][j] % 10 == player]
         if not positions:
@@ -172,6 +195,30 @@ class Congress(BaseUI):
                     queue.append((nx, ny))
         # Victory if all player's pawns are connected
         return len(visited) == len(positions)
+
+    def check_all_players_victory(self):
+        """Vérifie la victoire pour tous les joueurs et retourne le gagnant"""
+        for player in [1, 2]:
+            if self.check_victory(player):
+                return player
+        return None
+
+    def trigger_victory_local(self, winner):
+        """Déclenche l'écran de victoire pour le mode local uniquement"""
+        print(f"Local victory triggered: Player {winner} wins!")
+        self.running = False
+        
+        try:
+            # Afficher l'écran de victoire avec le nom approprié
+            if winner == 1:
+                WinScreen("Player 1")
+            elif winner == 2:
+                if self.__ai:
+                    WinScreen("Player 2 (AI)")
+                else:
+                    WinScreen("Player 2")
+        except Exception as e:
+            print(f"Error showing win screen: {e}")
 
     def draw(self):
         #Draw the full game screen: background, board grid, pawns, UI elements.
@@ -232,13 +279,11 @@ class Congress(BaseUI):
                 if 0 <= nr < self.grid_dim and 0 <= nc < self.grid_dim:
                     if self.board[nr][nc] % 10 == 0 and self.is_valid_move(r, c, nr, nc):
                         self.make_move(r, c, nr, nc)
-                        if self.check_victory(2):
-                            print("AI wins!")
-                            try:
-                                WinScreen("Player 2 (AI)")
-                            except Exception as e:
-                                print(f"Error showing win screen: {e}")
-                            self.running = False
-                        else:
+                        
+                        # Toujours vérifier la victoire après un mouvement de l'IA
+                        self.check_and_handle_victory()
+                        
+                        # Si pas de victoire, changer de joueur
+                        if self.running:  # Le jeu continue
                             self.switch_player()
                         return

@@ -98,7 +98,7 @@ class MainMenuUI(BaseUI):
                     self.launch_join_interface()
 
     def launch_square_selector(self, gamemode):
-        """✅ Launch square selector in integrated mode"""
+        
         try:
             selector = SquareSelectorUi(gamemode)
             # Integrated into our main loop
