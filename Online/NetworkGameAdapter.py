@@ -29,6 +29,7 @@ class NetworkGameAdapter(BaseUI):
         self.status_message = ""
         self.status_color = (255, 255, 255)
         
+        
         # Set up callbacks
         self.session.set_game_callbacks(
             board_update=self.on_board_update,
@@ -227,7 +228,7 @@ class NetworkGameAdapter(BaseUI):
         print("Board updated")
     
     def _check_local_victory(self):
-        """Vérifie les conditions de victoire localement (pour Katarenga et Isolation)"""
+        
         if self.game_finished:
             return
             
@@ -245,32 +246,32 @@ class NetworkGameAdapter(BaseUI):
             self._trigger_victory(winner)
     
     def _trigger_victory(self, winner):
-        """Déclenche l'animation de victoire et termine le jeu"""
-        self.game_finished = True
         
-        # Déterminer le nom du gagnant pour l'écran de victoire
+        self.game_finished = True
+        self.win_screen = WinScreen(winner_name)
+        # Déterminer le nom du gagnant
         if winner == self.local_player:
+            self.win_screen = WinScreen(f"Player {self.local_player} (You)")
             winner_name = f"Player {self.local_player} (You)"
             self.set_status("You win!", (100, 255, 100))
         else:
             winner_name = f"Player {winner} (Opponent)"
             self.set_status("You lose!", (255, 100, 100))
-        
+
         print(f"Victory triggered - Winner: {winner_name}")
+
+        # Afficher l'écran de victoire (maintenant correctement indenté)
+       
+            
         
-        # Afficher l'écran de victoire immédiatement
-        try:
-            win_screen = WinScreen(winner_name)
-        except Exception as e:
-            print(f"Error showing win screen: {e}")
-        
-        # Aussi déclencher le callback réseau si disponible
+
+        # Notifier le réseau
         if hasattr(self.session, '_end_game'):
             try:
                 self.session._end_game(winner)
             except Exception as e:
                 print(f"Error sending victory to network: {e}")
-    
+
     def _check_katarenga_victory(self):
         """Vérification de victoire pour Katarenga"""
         player1_count = 0
@@ -362,40 +363,27 @@ class NetworkGameAdapter(BaseUI):
     
     def on_game_end(self, winner):
         self.game_finished = True
-        
-        # Determine winner name for win screen
-        winner_name = ""
+    
+        # Determine winner name and show win screen
         if winner == "Disconnection":
             self.set_status("Opponent disconnected - Press Escape to quit", (255, 100, 100))
             winner_name = f"Player {self.local_player} (Opponent disconnected)"
-    def on_game_end(self, winner):
-        self.game_finished = True
-        
-        # Determine winner name for win screen
-        winner_name = ""
-        if winner == "Disconnection":
-            self.set_status("Opponent disconnected - Press Escape to quit", (255, 100, 100))
-            winner_name = f"Player {self.local_player} (Opponent disconnected)"
+            WinScreen(winner_name)
         elif winner == self.local_player:
             self.set_status("You win! Press Escape to quit", (100, 255, 100))
             winner_name = f"Player {self.local_player} (You)"
+            WinScreen(winner_name)
         else:
             self.set_status("You lose! Press Escape to quit", (255, 100, 100))
             winner_name = f"Player {winner} (Opponent)"
-        
+            WinScreen(winner_name)
+
         print(f"Game ended - Winner: {winner}")
-        
-        # Show win screen immediately for both players
-        try:
-            win_screen = WinScreen(winner_name)
-        except Exception as e:
-            print(f"Error showing win screen: {e}")
-            # Continue with normal end game flow
-    
+
     def set_status(self, message, color):
         self.status_message = message
         self.status_color = color
-    
+
     def update(self):
         if hasattr(self.game_instance, 'update'):
             self.game_instance.update()

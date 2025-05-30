@@ -145,7 +145,7 @@ class Congress(BaseUI):
                     print("Invalid move or square occupied")
 
     def check_and_handle_victory(self):
-        """Vérifie la victoire et la gère selon le mode (local ou réseau)"""
+        
         winner = self.check_all_players_victory()
         if winner:
             if self.network_mode:
@@ -197,14 +197,14 @@ class Congress(BaseUI):
         return len(visited) == len(positions)
 
     def check_all_players_victory(self):
-        """Vérifie la victoire pour tous les joueurs et retourne le gagnant"""
+        
         for player in [1, 2]:
             if self.check_victory(player):
                 return player
         return None
 
     def trigger_victory_local(self, winner):
-        """Déclenche l'écran de victoire pour le mode local uniquement"""
+        
         print(f"Local victory triggered: Player {winner} wins!")
         self.running = False
         
