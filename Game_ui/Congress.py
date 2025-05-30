@@ -48,52 +48,28 @@ class Congress(BaseUI):
         self.__ai = ai  # AI player flag or instance
 
     def place_pawn_congress(self, base_board):
-        """Place pawns for Congress game using the same logic as HostUI"""
         new_board = copy.deepcopy(base_board)
-        grid_dim = len(new_board)
-        
-        # Clean board first - remove any existing pawns
-        for i in range(grid_dim):
-            for j in range(grid_dim):
+        for i in range(self.grid_dim):
+            for j in range(self.grid_dim):
                 color_code = new_board[i][j] // 10
                 new_board[i][j] = color_code * 10  # Clear pawns, keep base color
 
-        # Define standard positions for 10x10 board (like in NetworkGameLogic)
-        blacks = [(0,1),(0,5),(1,9),(4,0),(5,9),(8,0),(9,4),(9,8)]
-        whites = [(0,4),(0,8),(1,0),(4,9),(5,0),(8,9),(9,1),(9,5)]
-        
-        def shift_position(r, c):
-            """Shift positions inward from borders to avoid corners/edges"""
-            if r < 5 and c < 5:
-                r2, c2 = r + 1, c + 1
-            elif r < 5 and c >= 5:
-                r2, c2 = r + 1, c - 1
-            elif r >= 5 and c < 5:
-                r2, c2 = r - 1, c + 1
-            else:
-                r2, c2 = r - 1, c - 1
-            return max(0, min(grid_dim-1, r2)), max(0, min(grid_dim-1, c2))
-        
-        # Place black pawns (Player 2)
-        for r, c in blacks:
-            if r < grid_dim and c < grid_dim:
-                r2, c2 = shift_position(r, c)
-                if r2 < grid_dim and c2 < grid_dim:
-                    color = new_board[r2][c2] // 10
-                    new_board[r2][c2] = color * 10 + 2  # Player 2
-        
-        # Place white pawns (Player 1)
-        for r, c in whites:
-            if r < grid_dim and c < grid_dim:
-                r2, c2 = shift_position(r, c)
-                if r2 < grid_dim and c2 < grid_dim:
-                    color = new_board[r2][c2] // 10
-                    new_board[r2][c2] = color * 10 + 1  # Player 1
+        # Direct placement of pawns
+        black_pawns = [(0, 1), (0, 4), (1, 7), (3, 0), (4, 7), (6, 0), (7, 3), (7, 6)]
+        white_pawns = [(0, 3), (0, 6), (1, 0), (3, 7), (4, 0), (6, 7), (7, 1), (7, 4)]
+
+        for r, c in black_pawns:
+            color = new_board[r][c] // 10
+            new_board[r][c] = color * 10 + 2
+
+        for r, c in white_pawns:
+            color = new_board[r][c] // 10
+            new_board[r][c] = color * 10 + 1
 
         return new_board
 
     def run(self):
-        """Main game loop: handles events, draws UI, updates display, and runs AI if active."""
+        #Main game loop: handles events, draws UI, updates display, and runs AI if active.
         while self.running:
             self.handle_events()
             self.draw()
@@ -105,7 +81,7 @@ class Congress(BaseUI):
                 self.congress_ai()
 
     def handle_events(self):
-        """Event handler for quitting, back button, and board clicks."""
+        #Event handler for quitting, back button, and board clicks.
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.running = False
@@ -116,7 +92,7 @@ class Congress(BaseUI):
                     self.handle_board_click(event.pos)
 
     def handle_board_click(self, pos):
-        """Handles clicks inside the board grid, converting pixel to grid coordinates."""
+        #Handles clicks inside the board grid, converting pixel to grid coordinates.
         x, y = pos
         if (self.left_offset <= x < self.left_offset + self.grid_size and
             self.top_offset <= y < self.top_offset + self.grid_size):
@@ -126,7 +102,6 @@ class Congress(BaseUI):
                 self.process_move(row, col)
 
     def process_move(self, row, col):
-        """Process player move: selection or movement"""
         val = self.board[row][col]
         owner = val % 10
 
@@ -163,12 +138,12 @@ class Congress(BaseUI):
                     print("Invalid move or square occupied")
 
     def is_valid_move(self, fr, fc, tr, tc):
-        """Checks if move is valid by delegating to move rules verifier."""
+        #Checks if move is valid by delegating to move rules verifier.
         case_color = self.board[fr][fc]
         return self.moves_rules.verify_move(case_color, fr, fc, tr, tc)
 
     def make_move(self, fr, fc, tr, tc):
-        """Executes move on board: clears origin cell, places pawn on target cell."""
+        #Executes move on board: clears origin cell, places pawn on target cell.
         dest_color = self.base_board[tr][tc] // 10
         orig_color = self.base_board[fr][fc] // 10
         self.board[fr][fc] = orig_color * 10  # Clear origin cell
@@ -176,21 +151,17 @@ class Congress(BaseUI):
         print(f"Moved from ({fr}, {fc}) to ({tr}, {tc})")
 
     def switch_player(self):
-        """Switch current player between 1 and 2."""
+        #Switch current player between 1 and 2.
         self.current_player = 2 if self.current_player == 1 else 1
         print(f"Player {self.current_player}'s turn")
 
     def check_victory(self, player):
-        """Check if player has won by connecting all their pawns"""
         positions = [(i, j) for i in range(self.grid_dim) for j in range(self.grid_dim)
                      if self.board[i][j] % 10 == player]
         if not positions:
             return False
-            
-        # Use BFS to check connectivity
         visited = set([positions[0]])
         queue = deque([positions[0]])
-        
         while queue:
             x, y = queue.popleft()
             for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
@@ -199,12 +170,11 @@ class Congress(BaseUI):
                     (nx, ny) not in visited and self.board[nx][ny] % 10 == player):
                     visited.add((nx, ny))
                     queue.append((nx, ny))
-        
         # Victory if all player's pawns are connected
         return len(visited) == len(positions)
 
     def draw(self):
-        """Draw the full game screen: background, board grid, pawns, UI elements."""
+        #Draw the full game screen: background, board grid, pawns, UI elements.
         screen = self.get_screen()
 
         # Draw background
@@ -241,9 +211,8 @@ class Congress(BaseUI):
                     pygame.draw.circle(screen, pawn_color, center, self.cell_size // 3)
 
         # Draw back button
-        pygame.draw.rect(screen, (70, 70, 70), self.back_button_rect)
-        pygame.draw.rect(screen, (255, 255, 255), self.back_button_rect, 2)
-        back_text = self.info_font.render("Back", True, (255, 255, 255))
+        pygame.draw.rect(screen, (180, 180, 180), self.back_button_rect)
+        back_text = self.info_font.render("Back", True, (0, 0, 0))
         back_rect = back_text.get_rect(center=self.back_button_rect.center)
         screen.blit(back_text, back_rect)
 
@@ -252,31 +221,24 @@ class Congress(BaseUI):
         screen.blit(player_text, (20, self.get_height() - 50))
 
     def congress_ai(self):
-        """Simple AI for player 2: randomly selects a pawn and attempts random valid moves."""
+        #Simple AI for player 2: randomly selects a pawn and attempts random valid moves.
         pawns = [(r, c) for r in range(self.grid_dim) for c in range(self.grid_dim)
                  if self.board[r][c] % 10 == 2]
 
         random.shuffle(pawns)
         for r, c in pawns:
-            # Try all possible moves for this pawn
-            possible_moves = []
-            for dr in range(-self.grid_dim, self.grid_dim + 1):
-                for dc in range(-self.grid_dim, self.grid_dim + 1):
-                    nr, nc = r + dr, c + dc
-                    if (0 <= nr < self.grid_dim and 0 <= nc < self.grid_dim and
-                        self.board[nr][nc] % 10 == 0 and self.is_valid_move(r, c, nr, nc)):
-                        possible_moves.append((nr, nc))
-            
-            if possible_moves:
-                nr, nc = random.choice(possible_moves)
-                self.make_move(r, c, nr, nc)
-                if self.check_victory(2):
-                    print("AI wins!")
-                    try:
-                        WinScreen("Player 2 (AI)")
-                    except Exception as e:
-                        print(f"Error showing win screen: {e}")
-                    self.running = False
-                else:
-                    self.switch_player()
-                return
+            for dr, dc in [(1,0), (-1,0), (0,1), (0,-1)]:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < self.grid_dim and 0 <= nc < self.grid_dim:
+                    if self.board[nr][nc] % 10 == 0 and self.is_valid_move(r, c, nr, nc):
+                        self.make_move(r, c, nr, nc)
+                        if self.check_victory(2):
+                            print("AI wins!")
+                            try:
+                                WinScreen("Player 2 (AI)")
+                            except Exception as e:
+                                print(f"Error showing win screen: {e}")
+                            self.running = False
+                        else:
+                            self.switch_player()
+                        return
