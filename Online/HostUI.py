@@ -6,6 +6,7 @@ from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Online.NetworkGameAdapter import NetworkGameAdapter
 import copy
 import time
+
 class HostUI(BaseUI):
 
     def __init__(self, title="Host Game"):

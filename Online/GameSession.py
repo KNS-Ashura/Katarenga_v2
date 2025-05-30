@@ -275,7 +275,7 @@ class GameSession:
         return []
     
     def _end_game_received(self, winner):
-        """Handle game end message received from opponent"""
+        
         self.game_finished = True
         
         if self.on_game_end:
@@ -291,6 +291,7 @@ class GameSession:
         
         if self.game_type == 3:  # Isolation
             return from_pos is None and self.board[to_row][to_col] % 10 == 0
+        
         else:  # Katarenga and Congress
             if from_pos is None:
                 return False

@@ -19,7 +19,7 @@ class NetworkManager:
         self.message_callback = message_callback
         self.disconnect_callback = disconnect_callback
     
-    # SERVER FUNCTIONS
+   
     def start_server(self, port=5000):
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,8 +77,7 @@ class NetworkManager:
         
         if self.disconnect_callback:
             self.disconnect_callback()
-    
-    # CLIENT FUNCTIONS
+                
     def connect_to_server(self, host_ip, port=5000):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -96,7 +95,7 @@ class NetworkManager:
         except Exception as e:
             #print(f"Unable to connect: {e}")
             return False
-    
+        
     def _listen_server(self):
         while self.is_connected:
             try:

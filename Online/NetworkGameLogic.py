@@ -40,7 +40,7 @@ class NetworkGameLogic:
         if case in (0, 50, 60):
             return False
         
-        # Check square is not ("en prise") = under attack
+        # Check square is not "en prise" = under attack
         if self._is_square_under_attack(board, moves_rules, to_row, to_col):
             return False
         

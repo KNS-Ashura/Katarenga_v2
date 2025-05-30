@@ -1,8 +1,6 @@
 import json
 import os
-
-class Board:
-    #in the following list:
+#in the following list:
     #the number 1 = blue
     #the number 2 = green
     #the number 3 = yellow
@@ -28,27 +26,29 @@ class Board:
     #a corner with no pawn = 50
     #a corner with a pawn of player 1 = 51
 
+class Board:
+    
     def __init__(self):
         self._square_list = {
-            "default1": [
+            "default 1": [
                 [40, 10, 10, 40],
                 [10, 10, 40, 30],
                 [30, 10, 40, 10],
                 [40, 40, 10, 40]
             ],
-            "default2": [
+            "default 2": [
                 [20, 20, 30, 30],
                 [10, 40, 40, 10],
                 [10, 30, 20, 20],
                 [40, 10, 10, 40]
             ],
-            "default3": [
+            "default 3": [
                 [10, 10, 10, 10],
                 [20, 20, 20, 20],
                 [30, 30, 30, 30],
                 [40, 40, 40, 40]
             ],
-            "default4": [
+            "default 4": [
                 [40, 30, 20, 10],
                 [10, 20, 30, 40],
                 [40, 30, 20, 10],
