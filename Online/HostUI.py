@@ -6,7 +6,6 @@ from Editor.Square_selector.SquareSelectorUi import SquareSelectorUi
 from Online.NetworkGameAdapter import NetworkGameAdapter
 import copy
 import time
-
 class HostUI(BaseUI):
 
     def __init__(self, title="Host Game"):
@@ -151,8 +150,8 @@ class HostUI(BaseUI):
                 final_board = self._place_pawns_katarenga(final_board)
                 
             elif self.selected_game == 2:  # Congress
-                pre_final_board = selector.board_obj.create_final_board(selector.board)
-                final_board = selector.board_obj.add_border_and_corners(pre_final_board)
+                # Pour Congress, utiliser directement le plateau 8x8 sans borders
+                final_board = selector.board_obj.create_final_board(selector.board)
                 # Place pawns for Congress
                 final_board = self._place_pawns_congress(final_board)
                 
@@ -198,8 +197,9 @@ class HostUI(BaseUI):
         return new_board
     
     def _place_pawns_congress(self, board):
+        """Place pawns for Congress on 8x8 board"""
         new_board = copy.deepcopy(board)
-        grid_dim = len(new_board)
+        grid_dim = len(new_board)  # Should be 8 for Congress
         
         # Clean board first
         for i in range(grid_dim):
@@ -207,33 +207,21 @@ class HostUI(BaseUI):
                 color_code = new_board[i][j] // 10
                 new_board[i][j] = color_code * 10
         
-        blacks = [(0,1),(0,5),(1,9),(4,0),(5,9),(8,0),(9,4),(9,8)]
-        whites = [(0,4),(0,8),(1,0),(4,9),(5,0),(8,9),(9,1),(9,5)]
+        # Positions directes pour plateau 8x8 (sans décalage)
+        black_pawns = [(0, 1), (0, 4), (1, 7), (3, 0), (4, 7), (6, 0), (7, 3), (7, 6)]
+        white_pawns = [(0, 3), (0, 6), (1, 0), (3, 7), (4, 0), (6, 7), (7, 1), (7, 4)]
         
-        def shift(r, c):
-            if r < 5 and c < 5:
-                r2, c2 = r + 1, c + 1
-            elif r < 5 and c >= 5:
-                r2, c2 = r + 1, c - 1
-            elif r >= 5 and c < 5:
-                r2, c2 = r - 1, c + 1
-            else:
-                r2, c2 = r - 1, c - 1
-            return max(0, min(grid_dim-1, r2)), max(0, min(grid_dim-1, c2))
-        
-        for r, c in blacks:
+        # Place black pawns (Player 2)
+        for r, c in black_pawns:
             if r < grid_dim and c < grid_dim:
-                r2, c2 = shift(r, c)
-                if r2 < grid_dim and c2 < grid_dim:
-                    code = new_board[r2][c2] // 10
-                    new_board[r2][c2] = code * 10 + 2  # Player 2
+                color = new_board[r][c] // 10
+                new_board[r][c] = color * 10 + 2  # Player 2
         
-        for r, c in whites:
+        # Place white pawns (Player 1) 
+        for r, c in white_pawns:
             if r < grid_dim and c < grid_dim:
-                r2, c2 = shift(r, c)
-                if r2 < grid_dim and c2 < grid_dim:
-                    code = new_board[r2][c2] // 10
-                    new_board[r2][c2] = code * 10 + 1  # Player 1
+                color = new_board[r][c] // 10
+                new_board[r][c] = color * 10 + 1  # Player 1
         
         return new_board
     

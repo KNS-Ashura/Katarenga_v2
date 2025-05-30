@@ -20,7 +20,7 @@ class Congress(BaseUI):
 
         # Board and UI dimensions
         self.cell_size = 60
-        self.grid_dim = 8  # Fixed to 8x8 for Congress game
+        self.grid_dim = len(self.base_board)
         self.grid_size = self.cell_size * self.grid_dim
         self.top_offset = 80
         self.left_offset = (self.get_width() - self.grid_size) // 2

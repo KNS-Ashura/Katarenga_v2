@@ -42,11 +42,29 @@ class NetworkGameAdapter(BaseUI):
         if self.game_type == 1:
             return Katarenga(ai_disabled, self.board)
         elif self.game_type == 2:
-            return Congress(ai_disabled, self.board)
+            # Pour Congress, on utilise le fichier original mais on remplace le plateau
+            congress_instance = Congress(ai_disabled, self.board)
+            # Remplacer le plateau généré par celui du réseau
+            congress_instance.board = self.board
+            congress_instance.base_board = self._extract_base_board(self.board)
+            return congress_instance
         elif self.game_type == 3:
             return Isolation(ai_disabled, self.board)
         else:
             raise ValueError(f"Unknown game type: {self.game_type}")
+    
+    def _extract_base_board(self, board_with_pawns):
+        """Extrait le plateau de base (sans pions) à partir du plateau avec pions"""
+        import copy
+        base_board = copy.deepcopy(board_with_pawns)
+        
+        for i in range(len(base_board)):
+            for j in range(len(base_board[0])):
+                # Garde seulement la couleur de base (retire les pions)
+                color_code = base_board[i][j] // 10
+                base_board[i][j] = color_code * 10
+        
+        return base_board
     
     def run(self):
         self.session.start_game()
@@ -179,6 +197,11 @@ class NetworkGameAdapter(BaseUI):
     def on_board_update(self, new_board):
         self.board = new_board
         self.game_instance.board = new_board  # Sync with game instance
+        
+        # Pour Congress, on met aussi à jour le base_board
+        if self.game_type == 2 and hasattr(self.game_instance, 'base_board'):
+            self.game_instance.base_board = self._extract_base_board(new_board)
+        
         print("Board updated")
     
     def on_player_change(self, new_player):
