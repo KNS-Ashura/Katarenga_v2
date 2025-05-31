@@ -169,7 +169,7 @@ class NetworkGameLogic:
             
             # If all pawns are connected, player wins
             if len(visited) == len(positions):
-                return player
+                return WinScreen(f"Player {player}")
         
         return None
     
@@ -186,12 +186,14 @@ class NetworkGameLogic:
         
         # Game ends if board is full
         if total_moves >= max_moves:
-            return current_player  # Last player to move wins
+            return  WinScreen(f"Player {current_player}")  # Last player to move wins
         
         # Check if current player can still play
         if not self.can_play_isolation(board, current_player):
             # Current player cannot play, opponent wins
-            return 2 if current_player == 1 else 1
+            winner = 2 if current_player == 1 else 1
+            return WinScreen(f"Player {winner}")
+            
         
         return None
     
