@@ -62,16 +62,15 @@ class NetworkGameLogic:
         case_color = board[from_row][from_col]
         if case_color % 10 != current_player:
             return False
-        
-       
-        # Player 1 can move from row 8 (cols 1-8) to victory corners (9,0) or (9,9)
-        if (current_player == 1 and from_row == 8 and 1 <= from_col <= 8 
-            and (to_row, to_col) in [(9, 0), (9, 9)]):
-            return True
-        
-        # Player 2 can move from row 1 (cols 1-8) to victory corners (0,0) or (0,9)  
-        if (current_player == 2 and from_row == 1 and 1 <= from_col <= 8
+
+        # Correction : victoire Joueur 1 = depuis ligne 1 vers (0,0) ou (0,9)
+        if (current_player == 1 and from_row == 1 and 1 <= from_col <= 8 
             and (to_row, to_col) in [(0, 0), (0, 9)]):
+            return True
+
+        # Correction : victoire Joueur 2 = depuis ligne 8 vers (9,0) ou (9,9)
+        if (current_player == 2 and from_row == 8 and 1 <= from_col <= 8
+            and (to_row, to_col) in [(9, 0), (9, 9)]):
             return True
         
         # Use existing movement rules for normal moves
