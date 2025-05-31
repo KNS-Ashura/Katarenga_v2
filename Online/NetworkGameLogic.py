@@ -129,12 +129,12 @@ class NetworkGameLogic:
         # Victory by corner occupation 
         if len(board) >= 10 and len(board[0]) >= 10:
             # Player 2 wins if occupies both bottom corners
-            if board[9][0] % 10 == 1 and board[9][9] % 10 == 1:
-                return 1
+            if board[9][0] % 10 == 2 and board[9][9] % 10 == 2:
+                return 2
             
             # Player 1 wins if occupies both top corners  
-            if board[0][0] % 10 == 2 and board[0][9] % 10 == 2:
-                return 2
+            if board[0][0] % 10 == 1 and board[0][9] % 10 == 1:
+                return 1
         
         return None
     
