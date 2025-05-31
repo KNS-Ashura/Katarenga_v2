@@ -178,12 +178,55 @@ class GameSession:
             elif msg_type == 'GAME_END':
                 winner = data['winner']
                 self._end_game_received(winner)
+                WinScreen("Player 1")
             
             elif msg_type == 'CHAT':
                 message_text = data['message']
         
         except Exception as e:
             print(f" Error processing message: {e}")
+    
+    def _handle_disconnect(self):
+        if not self.game_finished:
+            self._end_game("Disconnection")
+    
+    def _apply_move(self, from_pos, to_pos):
+        if not self.board:
+            return
+        
+        to_row, to_col = to_pos
+        
+        if self.game_type == 3:  # Isolation
+            # For Isolation, just place the piece
+            dest_color = self.board[to_row][to_col] // 10
+            self.board[to_row][to_col] = dest_color * 10 + self.current_player
+        
+        else:  # Katarenga and Congress
+            if from_pos is None:
+                print("Error : from is None")
+                return
+            
+            from_row, from_col = from_pos
+            
+            # Verify source has correct player piece
+            piece = self.board[from_row][from_col]
+            if piece % 10 != self.current_player:
+                return
+            
+            # Clear source square
+            source_color = piece // 10
+            self.board[from_row][from_col] = source_color * 10
+            
+            # Place piece at destination
+            dest_color = self.board[to_row][to_col] // 10
+            self.board[to_row][to_col] = dest_color * 10 + self.current_player
+        
+        # Update move rules with new board state
+        if self.moves_rules:
+            self.moves_rules._Moves_rules__board = self.board
+        
+        if self.on_board_update:
+            self.on_board_update(self.board)
     
     def _handle_disconnect(self):
         if not self.game_finished:
