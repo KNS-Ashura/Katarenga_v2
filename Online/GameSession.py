@@ -178,7 +178,6 @@ class GameSession:
             elif msg_type == 'GAME_END':
                 winner = data['winner']
                 self._end_game_received(winner)
-                WinScreen("Player 1")
             
             elif msg_type == 'CHAT':
                 message_text = data['message']
