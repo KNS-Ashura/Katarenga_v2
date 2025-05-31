@@ -176,7 +176,7 @@ class MainMenuUI(BaseUI):
             print(f"Error launching host interface: {e}")
 
     def launch_join_interface(self):
-        """✅ Launch join interface in integrated mode"""
+        """ Launch join interface in integrated mode"""
         try:
             join_interface = JoinUI()
             while join_interface.running and self.running:
