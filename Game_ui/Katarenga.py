@@ -120,7 +120,7 @@ class Katarenga(BaseUI):
                         self.switch_player()
                 elif self.current_player == 2 and 1 <= selected_col <= 9 and selected_row == 8 and (row, col) in [(9, 0), (9, 9)]:
                     self.make_move(selected_row, selected_col, row, col)
-                    self.selected_pawn = None
+                    self.selected_pawn = None 
                     winner = self.check_victory()
                     if winner == 0:
                         self.switch_player()
