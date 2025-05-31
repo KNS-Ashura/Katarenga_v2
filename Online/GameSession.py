@@ -110,12 +110,13 @@ class GameSession:
             
             winner = None
             if self.game_logic:
-                winner = self.game_logic.check_victory(
-                    self.board, self.game_type, self.current_player
-                )
-            
+                winner = self.game_logic.check_victory(self.board, self.game_type, self.current_player)
+
+            self._switch_player()
+
             if winner:
                 self._end_game(winner)
+
             
             return True
         
