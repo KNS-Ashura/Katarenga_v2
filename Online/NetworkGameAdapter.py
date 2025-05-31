@@ -251,10 +251,10 @@ class NetworkGameAdapter(BaseUI):
 
         # Déterminer le nom du gagnant
         if winner == self.local_player:
-            winner_name = f"Player {self.local_player} (You)"
+            winner_name = "Player 1"
             self.set_status("You win!", (100, 255, 100))
         else:
-            winner_name = f"Player {winner} (Opponent)"
+            winner_name = "Player2"
             self.set_status("You lose!", (255, 100, 100))
         
         # Afficher l'écran de victoire après avoir défini le nom

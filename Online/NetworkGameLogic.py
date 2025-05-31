@@ -99,12 +99,11 @@ class NetworkGameLogic:
     def check_victory(self, board, game_type, current_player):
         
         if game_type == 1:  # Katarenga
-            print("player win ucedshg_iuhfc_iuzfchviush")
-            return WinScreen(f"Player {self._check_katarenga_victory(board)}")
+            return self._check_katarenga_victory(board)
         elif game_type == 2:  # Congress
-            return WinScreen(f"Player {self._check_congress_victory(board)}")
+            return self._check_congress_victory(board)
         elif game_type == 3:  # Isolation
-            return WinScreen(f"Player {self._check_isolation_victory(board, current_player)}")
+            return self._check_isolation_victory(board, current_player)
         
         return None
     
