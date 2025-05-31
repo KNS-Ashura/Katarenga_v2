@@ -99,6 +99,7 @@ class NetworkGameLogic:
     def check_victory(self, board, game_type, current_player):
         
         if game_type == 1:  # Katarenga
+            print("coucou")
             return self._check_katarenga_victory(board)
         elif game_type == 2:  # Congress
             return self._check_congress_victory(board)
@@ -111,6 +112,7 @@ class NetworkGameLogic:
         
         player1_count = 0
         player2_count = 0
+        print("la fonction est appeller")
         
         # Count pawns for each player
         for row in range(len(board)):
@@ -121,6 +123,7 @@ class NetworkGameLogic:
                 elif player == 2:
                     player2_count += 1
         
+        print("les joueur sont comptés")
         # Victory by elimination
         if player1_count == 0:
             return WinScreen("Player 2")
@@ -130,12 +133,12 @@ class NetworkGameLogic:
         # Victory by corner occupation 
         if len(board) >= 10 and len(board[0]) >= 10:
             # Player 2 wins if occupies both bottom corners
-            if board[9][0] % 10 == 1 and board[9][9] % 10 == 1:
-                win = WinScreen("Player 1")
+            if board[9][0] % 10 == 2 and board[9][9] % 10 == 2:
+                WinScreen("Player 1")
             
             # Player 1 wins if occupies both top corners  
-            if board[0][0] % 10 == 2 and board[0][9] % 10 == 2:
-                WinScreen("Player 2")
+            if board[0][0] % 10 == 1 and board[0][9] % 10 == 1:
+                WinScreen("Player 1")
         
         return None
     
