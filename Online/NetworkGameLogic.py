@@ -126,19 +126,23 @@ class NetworkGameLogic:
         print("les joueur sont comptés")
         # Victory by elimination
         if player1_count == 0:
-            return WinScreen("Player 2")
+            print("gagnant")
+            return 2
         if player2_count == 0:
-            return WinScreen("Player 1")
+            print("gagnant")
+            return 1
         
         # Victory by corner occupation 
         if len(board) >= 10 and len(board[0]) >= 10:
             # Player 2 wins if occupies both bottom corners
             if board[9][0] % 10 == 2 and board[9][9] % 10 == 2:
-                WinScreen("Player 1")
+                print("gagnant")
+                return 2
             
             # Player 1 wins if occupies both top corners  
             if board[0][0] % 10 == 1 and board[0][9] % 10 == 1:
-                WinScreen("Player 1")
+                print("gagnant")
+                return 1
         
         return None
     
@@ -169,7 +173,7 @@ class NetworkGameLogic:
             
             # If all pawns are connected, player wins
             if len(visited) == len(positions):
-                return WinScreen(f"Player {player}")
+                return player
         
         return None
     
@@ -186,13 +190,13 @@ class NetworkGameLogic:
         
         # Game ends if board is full
         if total_moves >= max_moves:
-            return  WinScreen(f"Player {current_player}")  # Last player to move wins
+            return  current_player  # Last player to move wins
         
         # Check if current player can still play
         if not self.can_play_isolation(board, current_player):
             # Current player cannot play, opponent wins
             winner = 2 if current_player == 1 else 1
-            return WinScreen(f"Player {winner}")
+            return winner
             
         
         return None
