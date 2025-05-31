@@ -123,19 +123,19 @@ class NetworkGameLogic:
         
         # Victory by elimination
         if player1_count == 0:
-            return 2
+            return WinScreen("Player 2")
         if player2_count == 0:
-            return 1
+            return WinScreen("Player 1")
         
         # Victory by corner occupation 
         if len(board) >= 10 and len(board[0]) >= 10:
             # Player 2 wins if occupies both bottom corners
             if board[9][0] % 10 == 1 and board[9][9] % 10 == 1:
-                return 1
+                win = WinScreen("Player 1")
             
             # Player 1 wins if occupies both top corners  
             if board[0][0] % 10 == 2 and board[0][9] % 10 == 2:
-                return 2
+                WinScreen("Player 2")
         
         return None
     
