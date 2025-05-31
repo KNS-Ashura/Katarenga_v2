@@ -1,5 +1,6 @@
 # Online/GameSession.py
 from UI_tools.win_screen import WinScreen
+from UI_tools.win_screen import WinScreen
 import json
 import copy
 from Game_ui.move_rules import Moves_rules
@@ -287,6 +288,8 @@ class GameSession:
         
         if self.on_game_end:
             self.on_game_end(winner)
+
+        WinScreen(f"Player {winner}")
     
     def send_chat_message(self, text):
         message = {
@@ -324,8 +327,9 @@ class GameSession:
         self.game_finished = True
         
         if self.on_game_end:
-            print("GAGNANT")
-            WinScreen(f"Player {winner}")
+            self.on_game_end(winner)
+
+        WinScreen(f"Player {winner}")
     
     def _basic_validate_move(self, from_pos, to_pos):#get move validation in message when NetworkGameLogic is not working correctly
         if not self.moves_rules or not self.board:
