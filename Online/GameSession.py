@@ -177,6 +177,7 @@ class GameSession:
             elif msg_type == 'GAME_END':
                 winner = data['winner']
                 self._end_game_received(winner)
+                WinScreen("Player 1")
             
             elif msg_type == 'CHAT':
                 message_text = data['message']
@@ -242,7 +243,7 @@ class GameSession:
         self.network.send_message(json.dumps(message))
         
         if self.on_game_end:
-            WinScreen(f"Player {winner}")
+            self.on_game_end(winner)
     
     def send_chat_message(self, text):
         message = {
